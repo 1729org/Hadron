@@ -11,7 +11,7 @@ urls = (
 
 
 def check_signature(request_headers):
-    if not request_headers.get("X-Hub-Signature", False):
+    if not request_headers.get("environ", {}).get("X-Hub-Signature", False):
         print "No X-Hub-Signature header in %s" % request_headers
         return False
     hashed_token = request_headers["X-Hub-Signature"]
