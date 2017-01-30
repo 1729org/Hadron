@@ -11,12 +11,24 @@ urls = (
 
 
 def check_signature(request_headers):
-    if not request_headers.get("environ", {}).get("X-Hub-Signature", False):
+    try:
+        print request_headers.keys()
+    except:
+        print "That don't work son!"
+
+
+    raw_header = request_headers.get("environ", {})
+
+    print "Raw header: %s" % raw_header
+
+    header = raw_header.get("HTTP_X_HUB_SIGNATURE", False)
+
+    if not header:
         print "No X-Hub-Signature header in %s" % request_headers
         return False
     hashed_token = request_headers["X-Hub-Signature"]
     print "Hashed token: %s" % hashed_token
-    print "Our hashed token: %s" % hashlib.new(ENV["SECRET_TOKEN"]).hexdigest()
+    print "Our hashed token: %s" % hashlib.sha1(ENV["SECRET_TOKEN"]).hexdigest()
 
     if hashed_token == hashlib.new(ENV["SECRET_TOKEN"]).hexdigest():
         return True
