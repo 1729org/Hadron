@@ -14,6 +14,7 @@ def check_signature(request_json):
 class HandleGitWebHook(object):
     def POST(self):
         request_json = web.input()
+        request_json = json.loads(request_json)
         if not check_signature(request_json):
             print "Bad token."
             return json.dumps({'correct_token': True})
