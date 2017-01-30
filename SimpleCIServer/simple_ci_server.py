@@ -18,9 +18,11 @@ def check_signature(request_headers):
         return False
 
     print "Received Hashed token: %s" % hashed_token
-    print "Our hashed token: %s" % hashlib.sha1(ENV["SECRET_TOKEN"]).hexdigest()
+    print "Our hashed token: %s" % (
+        "sha1=" + hashlib.sha1(ENV["SECRET_TOKEN"]).hexdigest()
+    )
 
-    if hashed_token == hashlib.new(ENV["SECRET_TOKEN"]).hexdigest():
+    if hashed_token == "sha1=" + hashlib.sha1(ENV["SECRET_TOKEN"]).hexdigest():
         return True
     return False
 
