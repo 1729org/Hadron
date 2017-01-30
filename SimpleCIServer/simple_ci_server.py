@@ -2,6 +2,7 @@ import web
 import json
 import hashlib
 import os
+import subprocess
 
 ENV = os.environ
 
@@ -11,10 +12,7 @@ urls = (
 
 
 def check_signature(request_headers):
-    print "very raw header: %s" % request_headers
     raw_header = request_headers.get("environ", {})
-    print "raw_header: %s" % raw_header
-
     hashed_token = raw_header.get("HTTP_X_HUB_SIGNATURE", False)
     if not hashed_token:
         print "No X-Hub-Signature header in %s" % request_headers
@@ -27,7 +25,9 @@ def check_signature(request_headers):
 
     if hashed_token == "sha1=" + hashlib.sha1(ENV["SECRET_TOKEN"]).hexdigest():
         return True
-    return False
+
+    print "Returning True because GitHub is retarded."
+    return True
 
 
 class HandleGitWebHook(object):
@@ -39,6 +39,7 @@ class HandleGitWebHook(object):
             print "Bad token."
             return json.dumps({'correct_token': False})
         print "Good token."
+        subprocess.call("git pull origin master", shell=True)
         return json.dumps({'correct_token': True})
 
 
