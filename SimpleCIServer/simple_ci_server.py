@@ -5,9 +5,20 @@ urls = (
   '/', 'HandleGitWebHook'
 )
 
+
+def check_signature(request_json):
+    print "Got JSON: %s" % request_json
+    return False
+
+
 class HandleGitWebHook(object):
-    def GET(self):
-        return json.dumps({'received': True, 'action': 'update_script'})
+    def POST(self):
+        request_json = web.input()
+        if not check_signature(request_json):
+            print "Bad token."
+            return json.dumps({'correct_token': True})
+        print "Good token."
+        return json.dumps({'correct_token': True})
 
 
 if __name__ == "__main__":
