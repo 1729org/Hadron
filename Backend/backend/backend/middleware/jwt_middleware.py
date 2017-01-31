@@ -1,11 +1,19 @@
 import jwt
 import base64
+from pymongo import MongoClient
 
 def jwt_middleware(get_response):
+    client = MongoClient()
     def middleware(request):
-        print "All headers: %s" % request.META
         auth_header = request.META.get("HTTP_AUTHORIZATION")
-        print "Auth: %s" % base64.b64decode(auth_header)
+        if auth_header:
+            collection = client.get("users_db", {}).get("users_db", None)
+            user_record = collection.find_one({'email': auth_header})
+            if not user_record:
+                print "No record found for: %s" % auth_header
+            else:
+                print "Foud: %s" % user_record
+
         encoded_token = request.META.get('HTTP_X_AUTH_TOKEN')
         if encoded_token:
             decoded_token = jwt.decode(
@@ -13,7 +21,6 @@ def jwt_middleware(get_response):
                 auth_header,
                 algorithms=['HS256']
             )
-            print "MIDDLEWARE: Decoded token: %s" % decoded_token
         else:
             print "No auth_header."
 
