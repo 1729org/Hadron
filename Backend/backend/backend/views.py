@@ -9,7 +9,5 @@ from django.views.decorators.http import require_http_methods
 @require_http_methods(["GET"])
 def login(request):
     request_headers = request.META
-    request_json = json.loads(request.body)
     print "Headers: %s" % request_headers
-    print "Body: %s" % request_json
     raise HttpResponse('Unauthorized', status=401)
