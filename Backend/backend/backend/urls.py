@@ -16,10 +16,10 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 
-from . import views
+from . import views.auth
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
 
-    url(r'^user/login/', views.auth.login)
+    url(r'^user/login/', auth.login)
 ]
