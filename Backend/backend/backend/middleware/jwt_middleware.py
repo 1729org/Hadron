@@ -13,10 +13,9 @@ def jwt_middleware(get_response):
                 auth_header,
                 algorithms=['HS256']
             )
+            print "MIDDLEWARE: Decoded token: %s" % decoded_token
         else:
             print "No auth_header."
-
-        print "MIDDLEWARE: Decoded token: %s" % decoded_token
 
         response = get_response(request)
         return response
