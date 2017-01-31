@@ -10,4 +10,4 @@ from django.views.decorators.http import require_http_methods
 def login(request):
     request_headers = request.META
     print "Headers: %s" % request_headers
-    return HttpResponse('Unauthorized', status=401)
+    return HttpResponse('All good', status=200)
