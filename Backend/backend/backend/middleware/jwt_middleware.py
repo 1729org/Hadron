@@ -9,10 +9,11 @@ def jwt_middleware(get_response):
         if auth_header:
             db = client["users_db"]
             collection = db["users_db"]
-            
-            user_record = collection.find_one({'email': auth_header})
+
+            email = base64.b64decode(auth_header)
+            user_record = collection.find_one({'email': email})
             if not user_record:
-                print "No record found for: %s" % auth_header
+                print "No record found for: %s" % email
             else:
                 print "Foud: %s" % user_record
 
