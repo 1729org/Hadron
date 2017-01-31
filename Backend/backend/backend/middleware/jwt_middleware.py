@@ -7,7 +7,9 @@ def jwt_middleware(get_response):
     def middleware(request):
         auth_header = request.META.get("HTTP_AUTHORIZATION")
         if auth_header:
-            collection = client.get("users_db", {}).get("users_db", None)
+            db = client["users_db"]
+            collection = db["users_db"]
+            
             user_record = collection.find_one({'email': auth_header})
             if not user_record:
                 print "No record found for: %s" % auth_header
