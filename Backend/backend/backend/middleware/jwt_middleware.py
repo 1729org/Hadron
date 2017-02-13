@@ -17,9 +17,9 @@ def jwt_middleware(get_response):
             user_record = collection.find_one({'email': email})
             if not user_record:
                 print "No record found for: %s" % email
-                HttpResponse('[0] Unauthorized', status=401)
+                return HttpResponse('[0] Unauthorized', status=401)
             else:
-                print "Foud: %s" % user_record
+                print "Found: %s" % user_record
                 response = get_response(request)
                 return response
 

@@ -5,6 +5,10 @@ import os
 import subprocess
 
 ENV = os.environ
+if not ENV.get("SECRET_TOKEN", None):
+    import copy
+    ENV = copy.deepcopy(ENV)
+    ENV["SECRET_TOKEN"] = ""
 
 urls = (
   '/', 'HandleGitWebHook'
