@@ -7,6 +7,7 @@ from django.http import HttpResponse
 
 def jwt_middleware(get_response):
     client = MongoClient()
+
     def middleware(request):
         auth_header = request.META.get("HTTP_AUTHORIZATION")
         if auth_header:
@@ -20,6 +21,7 @@ def jwt_middleware(get_response):
                 return HttpResponse('[0] Unauthorized', status=401)
             else:
                 print "Found: %s" % user_record
+                request.user.is_authenticated = True
                 response = get_response(request)
                 return response
 
