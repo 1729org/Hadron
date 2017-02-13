@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Board } from './models/board';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +7,14 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'app works!';
+   private board :Board;
+   private authenticated: boolean;
+
+   constructor() {
+   		this.board = null;
+   }
+
+   onBoard(board :Board) {
+   		console.log(board);
+   }
 }
