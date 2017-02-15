@@ -8,7 +8,7 @@ import { Board } from './models/board';
 })
 export class AppComponent {
    private board :Board;
-   private authenticated: boolean;
+   private authenticated :boolean;
 
    constructor() {
    		this.board = null;

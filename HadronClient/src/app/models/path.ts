@@ -1,4 +1,4 @@
-import { Comparable } from '../generics/generics.tools';
+import { Comparable } from '../models/comparable';
 
 export class Path extends Comparable<Path>{
 	private _colorStroke :string;

@@ -16,7 +16,6 @@ export class FacebookService implements OnInit {
 
 	constructor(private authenticationService :AuthenticationService) {
 		FB.init(FacebookConstants.FACEBOOK_CONFIGURATION);
-        console.log(this.authenticationService);
 	}
 
 	login() {
