@@ -1,38 +1,36 @@
-import jwt
 import base64
-from pymongo import MongoClient
+from .. Utils.MongoRouter import MongoRouter
 
-from django.http import HttpResponse
+from django.http import JsonResponse
 
 
 def jwt_middleware(get_response):
-    client = MongoClient()
+    mongo_router = MongoRouter()
+
     def middleware(request):
+        print "Got method: %s" % request.method
+        with open("/tmp/method.txt", "w+") as destination:
+            destination.write("%s" % request.method)
+
+        if request.method == "OPTIONS":
+            return JsonResponse({}, status=200)
+
         auth_header = request.META.get("HTTP_AUTHORIZATION")
         if auth_header:
-            db = client["users_db"]
-            collection = db["users_db"]
-
+            # ToDo: Refactor as a login method
             email = base64.b64decode(auth_header)
-            user_record = collection.find_one({'email': email})
+            user_record = mongo_router.route("users").find_one({'email': email})
+
             if not user_record:
                 print "No record found for: %s" % email
-                return HttpResponse('[0] Unauthorized', status=401)
+                return JsonResponse({"message": "No record found for: %s" % email}, status=401)
             else:
                 print "Found: %s" % user_record
+                request.session.update({"email": email})
+                request.session.save()
                 response = get_response(request)
                 return response
 
-        encoded_token = request.META.get('HTTP_X_AUTH_TOKEN')
-        if encoded_token:
-            decoded_token = jwt.decode(
-                encoded_token,
-                auth_header,
-                algorithms=['HS256']
-            )
-        else:
-            print "No auth_header."
-
-        return HttpResponse('[1] Unauthorized', status=401)
+        return JsonResponse({"message": "[jwt_middleware] No auth_header"}, status=401)
 
     return middleware
