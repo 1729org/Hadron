@@ -8,8 +8,11 @@ from django.views.decorators.http import require_http_methods
 router = MongoRouter()
 
 
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "OPTIONS"])
 def login(request):
+    if request.method == "OPTIONS":
+        return JsonResponse({}, status=200)
+
     email = request.session.get("email", None)
 
     if email:
