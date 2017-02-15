@@ -18,7 +18,7 @@ def login(request):
             key=lambda k: k["lastModifiedDate"]
         )
         return JsonResponse({"boards": user_boards}, status=200)
-    return JsonResponse({"message": "No auth_header"}, status=401)
+    return JsonResponse({"message": "[login] No auth_header"}, status=401)
 
 
 def create_board():

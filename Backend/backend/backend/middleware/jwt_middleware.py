@@ -22,6 +22,6 @@ def jwt_middleware(get_response):
                 response = get_response(request)
                 return response
 
-        return JsonResponse({"message": "No auth_header"}, status=401)
+        return JsonResponse({"message": "[jwt_middleware] No auth_header"}, status=401)
 
     return middleware
