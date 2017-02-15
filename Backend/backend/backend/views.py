@@ -13,11 +13,12 @@ def login(request):
     auth_header = request.META.get("HTTP_AUTHORIZATION")
     if auth_header:
         email = base64.b64decode(auth_header)
-        user_boards = sorted(
+        user_board = sorted(
             router.route("users").find_one({"email": email}, {"boards": 1}),
             key=lambda k: k["lastModifiedDate"]
-        )
-        return JsonResponse({"boards": user_boards}, status=200)
+        )[0]
+        print "Returning: %s" % user_board
+        return JsonResponse({"boards": user_board}, status=200)
     return JsonResponse({"message": "[login] No auth_header"}, status=401)
 
 
