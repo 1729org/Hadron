@@ -8,6 +8,9 @@ def jwt_middleware(get_response):
     mongo_router = MongoRouter()
 
     def middleware(request):
+        if request.method == "OPTIONS":
+            return JsonResponse({}, status=200)
+
         auth_header = request.META.get("HTTP_AUTHORIZATION")
         if auth_header:
             # ToDo: Refactor as a login method
