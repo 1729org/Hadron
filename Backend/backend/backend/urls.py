@@ -21,5 +21,23 @@ from . import views
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
 
-    url(r'^user/login/', views.login)
+    url(r'^user/login/', views.login),
+    url(r'^board/create/', views.create_board)
 ]
+
+
+'''
+			Request
+			method: POST,
+			headers: {
+				x-auth-token: token
+			},
+			url: /board/create,
+			body: {
+ 				name:
+			}
+		Response
+			status 200
+				body: board
+			status 403
+'''
