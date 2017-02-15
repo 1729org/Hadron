@@ -19,6 +19,8 @@ def jwt_middleware(get_response):
                 return JsonResponse({"message": "No record found for: %s" % email}, status=401)
             else:
                 print "Found: %s" % user_record
+                request.session.update({"email": email})
+                request.session.save()
                 response = get_response(request)
                 return response
         elif request.method == "OPTIONS":
