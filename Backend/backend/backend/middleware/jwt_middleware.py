@@ -21,6 +21,10 @@ def jwt_middleware(get_response):
                 print "Found: %s" % user_record
                 response = get_response(request)
                 return response
+        elif request.method == "OPTIONS":
+            print "OPTIONS call"
+            response = get_response(request)
+            return response
 
         return JsonResponse({"message": "[jwt_middleware] No auth_header"}, status=401)
 
