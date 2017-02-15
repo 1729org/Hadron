@@ -9,6 +9,8 @@ def jwt_middleware(get_response):
 
     def middleware(request):
         print "Got method: %s" % request.method
+        with open("/tmp/method.txt", "w+") as destination:
+            destination.write("%s" % request.method)
 
         if request.method == "OPTIONS":
             return JsonResponse({}, status=200)

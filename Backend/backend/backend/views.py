@@ -1,5 +1,3 @@
-import base64
-
 from . Utils.MongoRouter import MongoRouter
 
 from django.http import JsonResponse
