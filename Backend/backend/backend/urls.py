@@ -23,6 +23,7 @@ from . import settings
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
 
+    url(r'^/', views.main),
     url(r'^user/login/', views.login),
     url(r'^board/create/', views.create_board)
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
