@@ -133,6 +133,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
+STATIC_ROOT = '/home/ubuntu/Hadron/Backend/backend/static'
 
 MEDIA_ROOT = '/home/ubuntu/Hadron/Backend/backend/media'
 
