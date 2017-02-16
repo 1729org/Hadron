@@ -45,7 +45,7 @@ class HandleGitWebHook(object):
         print "Good token."
         subprocess.call("git pull origin master", shell=True)
         subprocess.call(
-            "cp -R /home/ubuntu/Hadron/HadronClient/dist/* /home/ubuntu/Hadron/Backend/backend/backend/static -y",
+            "cp -R /home/ubuntu/Hadron/HadronClient/dist/* /home/ubuntu/Hadron/Backend/backend/backend/frontend/built",
             shell=True
         )
         subprocess.call(
