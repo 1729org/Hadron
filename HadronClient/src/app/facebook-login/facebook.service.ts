@@ -29,7 +29,7 @@ export class FacebookService implements OnInit {
                    error => {
                       if(error.status === 401) {
                         this.board.next(null);
-                   }
+                      }
                 }); 
             }); 
         }, FacebookConstants.FACEBOOK_SCOPE);

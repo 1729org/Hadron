@@ -8,13 +8,12 @@ import { Board } from './models/board';
 })
 export class AppComponent {
    private board :Board;
-   private authenticated :boolean;
 
    constructor() {
    		this.board = null;
    }
 
    onBoard(board :Board) {
-   		console.log(board);
+      this.board = board;
    }
 }
