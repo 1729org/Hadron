@@ -1,20 +1,21 @@
 from . Utils.MongoRouter import MongoRouter
 
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.core.files.storage import get_storage_class
 
 from . import settings
 
-INDEX_HTML = '/index.html'
+INDEX_HTML = 'index.html'
 
 router = MongoRouter()
 
 
 def main(request):
     storage_class = get_storage_class(settings.STATICFILES_STORAGE)
-    index_file = storage_class().open(INDEX_HTML)
-    return StreamingHttpResponse(index_file)
+    with storage_class().open(INDEX_HTML) as index_file:
+        html_content = index_file.read()
+    return HttpResponse(html_content)
 
 
 @require_http_methods(["GET", "OPTIONS"])
