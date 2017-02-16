@@ -1,22 +1,23 @@
-import { Board } from '../models/board';
 import { TextDocument } from '../models/text-document';
+import { User } from '../models/user';
 import { Path } from '../models/path';
 import { GraphicDocument } from '../models/graphic-document';
 import { Collaboration } from '../models/collaboration';
-import { User } from '../models/user';
+import { Board } from '../models/board';
+
+
 
 export class Tools {
 	public static mapToBoard(data: any) :Board {
-		if(!data.boards) {
+		if(!data.board) {
         		return null;
     	} else {
-    		let boards = [];
-    		for(let board of data.boards) {
-    			let boardInst = new Board(board.name, 
-                    new Date(board.lastModifiedDate));
-                boardInst.textDocument = Tools.mapToTextDocument(board.textDocument);
-    			boardInst.graphicDocument = Tools.mapToGraphicDocument(board.graphicDocument);
-    		}
+			let boardInst = new Board(data.board.name, 
+                new Date(data.board.lastModifiedDate));
+                boardInst.textDocument = Tools.mapToTextDocument(data.board.textDocument);
+    			boardInst.graphicDocument = Tools.mapToGraphicDocument(data.board.graphicDocument);
+    			boardInst.collaboration = Tools.mapToCollaboration(data.board.collaboration);
+    		return boardInst;
     	}
 	}
 
@@ -60,54 +61,5 @@ export class Tools {
 				collaboration.pushUser(new User(user.email, user.assignedUserColor));
 			}
 		}
-	}
-}
-
-export abstract class Comparable <T>{
-	abstract compareTo(object :T) :number;
-}
-
-export class PriorityQueue <T extends Comparable<T>>{
-	private queue :Array<T>;
-
-	constructor() {
-		this.queue = [];
-	}
-
-	public push(object :T) {
-		this.queue.push(object);
-		this.sortArray(this.queue);
-	}
-
-	public pop() :T {
-		return this.queue.pop();
-	}
-
-	public peek() :T {
-		return this.queue[this.queue.length - 1];
-	}
-
-	public isEmpty() :boolean {
-		return this.queue.length === 0;
-	}
-
-	public mergeWithQueueAsArray(priorityQueue :PriorityQueue<T>) :Array<T>{
-		return this.mergeWithArrayAsArray(priorityQueue.asArray());
-	}
-
-	public mergeWithArrayAsArray(array :Array<T>) :Array<T>{
-		let mergedArray = this.queue.concat(array);
-		this.sortArray(mergedArray);
-		return mergedArray;
-	}
-
-	public asArray() :Array<T> {
-		return this.queue;
-	}
-
-	private sortArray(array: Array<T>) :void{
-		array.sort(function(firstObject :T, secondObject :T) {
-			return firstObject.compareTo(secondObject);
-		});
 	}
 }

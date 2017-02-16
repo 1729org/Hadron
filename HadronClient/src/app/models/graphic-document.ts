@@ -1,5 +1,5 @@
 import { Path } from './path';
-import { PriorityQueue } from '../generics/generics.tools';
+import { PriorityQueue } from './priority-queue';
 
 export class GraphicDocument {
 	private _name :string;

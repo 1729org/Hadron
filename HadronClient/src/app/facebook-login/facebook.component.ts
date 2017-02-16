@@ -12,6 +12,7 @@ import { Board } from '../models/board';
 export class FacebookComponent {
 	@Output() 
 	private onBoard = new EventEmitter<Board>();
+	
 	constructor(private facebookService :FacebookService) {
 		facebookService.board$.subscribe(board => {
 			this.onBoard.emit(board);
