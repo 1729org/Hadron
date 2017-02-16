@@ -2,7 +2,7 @@
 	<div class="col-5">
 	</div>
 	<div class="col-3 align-items-center">
-			<facebook-login  *ngIf="authenticated" (onBoard)="onBoard($event)"></facebook-login>
-			<input type="text" [hidden]="authenticated == false && !board">
+			<facebook-login  *ngIf="!isAuthenticated()" (onBoard)="onBoard($event)"></facebook-login>
+			<input type="text" [hidden]="!shouldCreateNewBoard()">
 	</div>
 </div>
