@@ -128,17 +128,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+#
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, "static"),
+# ]
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-]
-
-STATIC_ROOT = '/home/ubuntu/Hadron/Backend/backend/static'
-
-MEDIA_ROOT = '/home/ubuntu/Hadron/Backend/backend/media'
+STATIC_ROOT = os.path.join(BASE_DIR, "static")  # '/home/ubuntu/Hadron/Backend/backend/static'
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")    # '/home/ubuntu/Hadron/Backend/backend/media'
 
 MEDIA_URL = '/media/'
-
 
 MONGO_SETTINGS = {
     "local": {"host": "localhost", "port": 27017}
