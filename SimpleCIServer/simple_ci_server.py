@@ -44,6 +44,17 @@ class HandleGitWebHook(object):
             return json.dumps({'correct_token': False})
         print "Good token."
         subprocess.call("git pull origin master", shell=True)
+        subprocess.call(
+            "cp -R /home/ubuntu/Hadron/HadronClient/dist/* /home/ubuntu/Hadron/Backend/backend/static",
+            shell=True
+        )
+        subprocess.call(
+            "/home/ubuntu/Hadron/Backend/backend_env/bin/python " +
+            "/home/ubuntu/Hadron/Backend/backend/manage.py " +
+            "collectstatic",
+            shell=True
+        )
+
         return json.dumps({'correct_token': True})
 
 
