@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-$SCI_RESULT=$(ps aux | grep "/usr/bin/python SimpleCIServer/simple_ci_server.py" | wc -l)
+SCI_RESULT=$(ps aux | grep "/usr/bin/python SimpleCIServer/simple_ci_server.py" | wc -l)
 echo "SCI_RESULT: $SCI_RESULT"
 
 if [ "$SCI_RESULT" -eq "1" ]; then
@@ -13,7 +13,7 @@ if [ "$SCI_RESULT" -eq "1" ]; then
 fi
 
 
-$BKD_RESULT=$(ps aux | grep "/home/ubuntu/Hadron/Backend/backend_env/bin/python Backend/backend/manage.py runserver 0.0.0.0:8000" | wc -l)
+BKD_RESULT=$(ps aux | grep "/home/ubuntu/Hadron/Backend/backend_env/bin/python Backend/backend/manage.py runserver 0.0.0.0:8000" | wc -l)
 echo "BKD_RESULT: $BKD_RESULT"
 
 if [ "$BKD_RESULT" -eq "1" ]; then
