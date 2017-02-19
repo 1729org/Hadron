@@ -47,15 +47,15 @@ def login(request):
 def create_board(request):
     email = request.session.get("email", None)
 
-    with open("/tmp/test_endpoint", "w+") as destination:
-        destination.write("Got this email: %s\n" % email)
-
     if email:
         try:
             board_body = json.loads(request.body)
-
-            with open("/tmp/test_endpoint", "a+") as destination:
-                destination.write("Got this board body: %s\n" % board_body)
+            router.route("users").update_one(
+                {"email": email},
+                {"$push": {
+                    "boards": board_body
+                }}
+            )
 
             return JsonResponse({"board": board_body}, status=200)
         except Exception as e:
