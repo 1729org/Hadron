@@ -40,8 +40,10 @@ def login(request):
     return JsonResponse({"message": "[login] No email"}, status=401)
 
 
+@require_http_methods(["POST"])
 def create_board(request):
     email = request.session.get("email", None)
+    print "Email: %s" % email
 
     if email:
         try:
