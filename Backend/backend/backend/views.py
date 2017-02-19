@@ -1,21 +1,23 @@
 from . Utils.MongoRouter import MongoRouter
 
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.core.files.storage import get_storage_class
-
-from . import settings
 
 INDEX_HTML = 'index.html'
 
 router = MongoRouter()
 
 
-def main(request):
-    storage_class = get_storage_class(settings.STATICFILES_STORAGE)
-    with storage_class().open(INDEX_HTML) as index_file:
-        html_content = index_file.read()
-    return HttpResponse(html_content)
+def get_user_board(email):
+    last_visited = router.route("users").find_one({"email": email}, {"lastVisitedId": 1})["lastVisitedId"],
+    last_visited = last_visited[0]
+    results = router.route("users").find_one(
+        {"email": email, "boards": {"$elemMatch": {"name": last_visited}}},
+        {"boards": 1}
+    )["boards"]
+    for result in results:
+        if result["name"] == last_visited:
+            return result
 
 
 @require_http_methods(["GET", "OPTIONS"])
@@ -24,10 +26,7 @@ def login(request):
 
     if email:
         try:
-            user_board = sorted(
-                router.route("users").find_one({"email": email}, {"boards": 1}),
-                key=lambda k: k["lastModifiedDate"]
-            )[0]
+            user_board = get_user_board(email)
             print "Returning: %s" % user_board
             return JsonResponse({"boards": user_board}, status=200)
         except Exception as e:
@@ -39,3 +38,20 @@ def login(request):
 
 def create_board():
     return JsonResponse({"message": "soon"}, status=200)
+
+
+'''
+			Request
+			method: POST,
+			headers: {
+				x-auth-token: token
+			},
+			url: /board/create,
+			body: {
+ 				name:
+			}
+		Response
+			status 200
+				body: board
+			status 403
+'''
