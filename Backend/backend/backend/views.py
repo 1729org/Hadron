@@ -48,11 +48,12 @@ def create_board(request):
     if email:
         try:
             board_body = json.loads(request.body)
-            print "Got this board body: %s" % board_body
+            with open("/tmp/test_endpoint") as destination:
+                destination.write("Got this board body: %s" % board_body)
             return JsonResponse({"board": board_body}, status=200)
         except Exception as e:
             print "Create board failed with error: %s" % unicode(e)
-            return JsonResponse({"message": unicode(e)}, status=404)
+            return JsonResponse({"message": unicode(e)}, status=401)
 
     return JsonResponse({"message": "[create_board] No email"}, status=401)
 
