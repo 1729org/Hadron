@@ -43,13 +43,17 @@ def login(request):
 @require_http_methods(["POST"])
 def create_board(request):
     email = request.session.get("email", None)
-    print "Email: %s" % email
+
+    with open("/tmp/test_endpoint", "w+") as destination:
+        destination.write("Got this email: %s\n" % email)
 
     if email:
         try:
             board_body = json.loads(request.body)
-            with open("/tmp/test_endpoint") as destination:
-                destination.write("Got this board body: %s" % board_body)
+
+            with open("/tmp/test_endpoint", "a+") as destination:
+                destination.write("Got this board body: %s\n" % board_body)
+
             return JsonResponse({"board": board_body}, status=200)
         except Exception as e:
             print "Create board failed with error: %s" % unicode(e)

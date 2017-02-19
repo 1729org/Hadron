@@ -8,11 +8,8 @@ def jwt_middleware(get_response):
     mongo_router = MongoRouter()
 
     def middleware(request):
-        return JsonResponse({}, status=200)
-
-        print "Got method: %s" % request.method
-        with open("/tmp/method.txt", "w+") as destination:
-            destination.write("%s" % request.method)
+        response = get_response(request)
+        return response
 
         if request.method == "OPTIONS":
             return JsonResponse({}, status=200)
