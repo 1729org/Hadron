@@ -27,8 +27,10 @@ def login(request):
     if email:
         try:
             user_board = get_user_board(email)
-            print "Returning: %s" % user_board
-            return JsonResponse({"boards": user_board}, status=200)
+            if user_board:
+                print "Returning: %s" % user_board
+                return JsonResponse({"boards": user_board}, status=200)
+            return JsonResponse({"message": "Last visited board not found"}, status=404)
         except Exception as e:
             print "No boards found or other error: %s" % unicode(e)
             return JsonResponse({"message": unicode(e)}, status=404)
