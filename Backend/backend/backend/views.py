@@ -1,3 +1,5 @@
+import json
+
 from . Utils.MongoRouter import MongoRouter
 
 from django.http import JsonResponse
@@ -38,8 +40,19 @@ def login(request):
     return JsonResponse({"message": "[login] No email"}, status=401)
 
 
-def create_board():
-    return JsonResponse({"message": "soon"}, status=200)
+def create_board(request):
+    email = request.session.get("email", None)
+
+    if email:
+        try:
+            board_body = json.loads(request.body)
+            print "Got this board body: %s" % board_body
+            return JsonResponse({"board": {}}, status=200)
+        except Exception as e:
+            print "Create board failed with error: %s" % unicode(e)
+            return JsonResponse({"message": unicode(e)}, status=404)
+
+    return JsonResponse({"message": "[create_board] No email"}, status=401)
 
 
 '''
