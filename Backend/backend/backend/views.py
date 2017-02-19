@@ -49,7 +49,7 @@ def create_board(request):
         try:
             board_body = json.loads(request.body)
             print "Got this board body: %s" % board_body
-            return JsonResponse({"board": {}}, status=200)
+            return JsonResponse({"board": board_body}, status=200)
         except Exception as e:
             print "Create board failed with error: %s" % unicode(e)
             return JsonResponse({"message": unicode(e)}, status=404)
