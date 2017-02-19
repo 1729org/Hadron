@@ -23,3 +23,15 @@ if [ "$BKD_RESULT" -eq "1" ]; then
     Backend/backend_env/bin/python /home/ubuntu/Hadron/Backend/backend/manage.py runserver 0.0.0.0:8000 &
     cd $CURRENT_DIR
 fi
+
+
+NG_RESULT=$(ps aux | grep "angular-cli" | wc -l)
+echo "BKD_RESULT: $NG_RESULT"
+
+if [ "$NG_RESULT" -eq "1" ]; then
+    echo "Angular server has died. RIP. Now restarting."
+    CURRENT_DIR=$(pwd)
+    cd /home/ubuntu/Hadron/HadronClient
+    ng serve --host 0.0.0.0 &
+    cd $CURRENT_DIR
+fi
