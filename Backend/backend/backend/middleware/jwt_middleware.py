@@ -8,6 +8,10 @@ def jwt_middleware(get_response):
     mongo_router = MongoRouter()
 
     def middleware(request):
+        # ToDo: Fix this
+        email = "silver_iii_bullet@yahoo.com"
+        request.session.update({"email": email})
+        request.session.save()
         response = get_response(request)
         return response
 
