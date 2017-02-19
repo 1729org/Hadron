@@ -4,6 +4,8 @@ from . Utils.MongoRouter import MongoRouter
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+
 
 INDEX_HTML = 'index.html'
 
@@ -41,6 +43,7 @@ def login(request):
 
 
 @require_http_methods(["POST"])
+@csrf_exempt
 def create_board(request):
     email = request.session.get("email", None)
 
