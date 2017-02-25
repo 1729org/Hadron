@@ -1,21 +1,27 @@
+import json
+
 from . Utils.MongoRouter import MongoRouter
 
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.core.files.storage import get_storage_class
+from django.views.decorators.csrf import csrf_exempt
 
-from . import settings
 
 INDEX_HTML = 'index.html'
 
 router = MongoRouter()
 
 
-def main(request):
-    storage_class = get_storage_class(settings.STATICFILES_STORAGE)
-    with storage_class().open(INDEX_HTML) as index_file:
-        html_content = index_file.read()
-    return HttpResponse(html_content)
+def get_user_board(email):
+    last_visited = router.route("users").find_one({"email": email}, {"lastVisitedId": 1})["lastVisitedId"],
+    last_visited = last_visited[0]
+    results = router.route("users").find_one(
+        {"email": email, "boards": {"$elemMatch": {"name": last_visited}}},
+        {"boards": 1}
+    )["boards"]
+    for result in results:
+        if result["name"] == last_visited:
+            return result
 
 
 @require_http_methods(["GET", "OPTIONS"])
@@ -24,12 +30,11 @@ def login(request):
 
     if email:
         try:
-            user_board = sorted(
-                router.route("users").find_one({"email": email}, {"boards": 1}),
-                key=lambda k: k["lastModifiedDate"]
-            )[0]
-            print "Returning: %s" % user_board
-            return JsonResponse({"boards": user_board}, status=200)
+            user_board = get_user_board(email)
+            if user_board:
+                print "Returning: %s" % user_board
+                return JsonResponse({"boards": user_board}, status=200)
+            return JsonResponse({"message": "Last visited board not found"}, status=404)
         except Exception as e:
             print "No boards found or other error: %s" % unicode(e)
             return JsonResponse({"message": unicode(e)}, status=404)
@@ -37,5 +42,41 @@ def login(request):
     return JsonResponse({"message": "[login] No email"}, status=401)
 
 
-def create_board():
-    return JsonResponse({"message": "soon"}, status=200)
+@require_http_methods(["POST"])
+@csrf_exempt
+def create_board(request):
+    email = request.session.get("email", None)
+
+    if email:
+        try:
+            board_body = json.loads(request.body)
+            router.route("users").update_one(
+                {"email": email},
+                {"$push": {
+                    "boards": board_body
+                }}
+            )
+
+            return JsonResponse({"board": board_body}, status=200)
+        except Exception as e:
+            print "Create board failed with error: %s" % unicode(e)
+            return JsonResponse({"message": unicode(e)}, status=401)
+
+    return JsonResponse({"message": "[create_board] No email"}, status=401)
+
+
+'''
+			Request
+			method: POST,
+			headers: {
+				x-auth-token: token
+			},
+			url: /board/create,
+			body: {
+ 				name:
+			}
+		Response
+			status 200
+				body: board
+			status 403
+'''
