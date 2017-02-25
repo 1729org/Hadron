@@ -13,7 +13,7 @@ module.exports = function(application,
 		if(req.url === genericConstants.LOGIN_URL) {
 			return next();
 		}
-		var token = req.headers[genericConstants.TOKEN_HEADER];
+		var token = req.headers['x-auth-token'];
 		
 		if(!token){
 			return res.status(genericConstants.UNAUTHORIZED).json({
@@ -29,23 +29,9 @@ module.exports = function(application,
 			});
 		}
 
-		if(req.url === genericConstants.RANDOM_IQ_QUESTION_URL) {
-			var decodedToken = jwt.decode(token);
-			if(decodedToken.iqR === 0) {
-	            return res.status(genericConstants.UNAUTHORIZED).json({
-	                error: genericConstants.NO_MORE_IQ_QUESTIONS.message
-	            });
-		    }
-		}
+		var decodedToken = jwt.decode(token);
 
-		if(req.url === genericConstants.RANDOM_GK_QUESTION_URL) {
-			var decodedToken = jwt.decode(token);
-			if(decodedToken.gkR === 0) {
-	            return res.status(genericConstants.UNAUTHORIZED).json({
-	                error: genericConstants.NO_MORE_GK_QUESTIONS.message
-	            });
-		    }
-		}
+ 		req.email = decodedToken.email;
 
 		return next();
 	}
@@ -64,28 +50,7 @@ module.exports = function(application,
 
 	return {
 		generateToken: function(user) {
-			
-			var at8am = setTodayAt8AM(),
-				dateNowTimestamp = Date.now();
-		    var diff = dateNowTimestamp - (at8am.getTime() + constantValues.DETLA_UPDATE_TIME_BOUND);
-		    var expirationTime = null; 
-		    if(diff > 0) {
-		    	expirationTime = constantValues.SECONDS_IN_A_DAY - diff/constantValues.MILLISECONDS_IN_SECOND;
-		    } else {
-		    	expirationTime = Math.abs(diff);
-		    }
-		    if(user.exp){
-		    	expirationTime = Math.min(expirationTime, (parseInt(user.exp) * constantValues.MILLISECONDS_IN_SECOND - dateNowTimestamp)/constantValues.MILLISECONDS_IN_SECOND)
-		    } else {
-		    	expirationTime = Math.min(expirationTime, constantValues.SECONDS_IN_6_HOURS);
-		    }
-		    genericConstants.TOKEN_OPTIONS.expiresIn = expirationTime;
-
-		    try {
-				return jwt.sign(user, secretKey, genericConstants.TOKEN_OPTIONS);
-			} catch(ex) {
-				console.log(ex);
-			}
+			return jwt.sign(user, secretKey);
 		},
 		verifyToken: function(token) {
 			if(!token) {

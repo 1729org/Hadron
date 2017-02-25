@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Rx';
-import { Http, RequestOptions, ConnectionBackend, Request, RequestOptionsArgs, Response } from '@angular/http';
+import { Http, RequestOptions, ConnectionBackend, Request, RequestOptionsArgs, Response, Headers } from '@angular/http';
 
 @Injectable()
 export class HadronHttp extends Http {
@@ -14,15 +14,14 @@ export class HadronHttp extends Http {
   }
 
   get(url: string, options?: RequestOptionsArgs): Observable<Response> {
-      console.log(url);
-      return this.intercept(super.get(url,options));
+      return this.intercept(super.get(url, this.getRequestOptionArgs(options, true)));
   }
 
-  post(url: string, body: string, options?: RequestOptionsArgs): Observable<Response> {   
+  post(url: string, body: any, options?: RequestOptionsArgs): Observable<Response> {   
       return this.intercept(super.post(url, body, this.getRequestOptionArgs(options)));
   }
 
-  put(url: string, body: string, options?: RequestOptionsArgs): Observable<Response> {
+  put(url: string, body: any, options?: RequestOptionsArgs): Observable<Response> {
       return this.intercept(super.put(url, body, this.getRequestOptionArgs(options)));
   }
 
@@ -30,18 +29,43 @@ export class HadronHttp extends Http {
       return this.intercept(super.delete(url, options));
   }
 
-  getRequestOptionArgs(options?: RequestOptionsArgs) : RequestOptionsArgs {
-      options.headers.append('Content-Type', 'application/json');
+  getRequestOptionArgs(options?: RequestOptionsArgs, noBody? :boolean) : RequestOptionsArgs {
+      if(!options) {
+        options = new RequestOptions({
+          headers: new Headers()
+        });
+      }
+      if(!noBody) {
+        options.headers.append('Content-Type', 'application/json');
+      }
+      if(localStorage.getItem('token')) {
+        options.headers.append('x-auth-token', localStorage.getItem('token'));
+      }
       return options;
   }
 
   intercept(observable: Observable<Response>): Observable<Response> {
-      return observable.catch((err, source) => {
-          if (err.status  == 403) {
+      return observable.map((response :Response) => {
+          if(response.headers.get('x-auth-token')) {
+            this.setAuthToken(response.headers.get('x-auth-token'));
+          }
+          return response;
+        }).catch((err, source) => {
+          if(err.status === 401) {
+            if(err.headers.get('x-auth-token')) {
+              this.setAuthToken(err.headers.get('x-auth-token'));
+            }
+          }
+          if (err.status  === 403) {
               return Observable.empty();
               
           }
           return Observable.throw(err);
       });
+  }
+
+  setAuthToken(token : any) {
+      console.log('setting token', token)
+      localStorage.setItem('token', token);
   }
 }

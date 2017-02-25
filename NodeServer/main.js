@@ -5,15 +5,21 @@ var express    			=  require('express'),
 	genericConstants    =  require('./generic-constants')(),
 	http				=  require('http'),
 	mongodb = require('mongodb'),
-    mongoClient = mongodb.MongoClient;
+    mongoClient = mongodb.MongoClient,
+	tokenHandler = require('./interceptor.js')(application, genericConstants);
 
-require('./interceptor.js')(application, genericConstants);
+// parse application/x-www-form-urlencoded 
+application.use(bodyParser.urlencoded({ extended: false }))
+ 
+// parse application/json 
+application.use(bodyParser.json())
+ 
 
 mongoClient.connect('mongodb://localhost:27017/hadrondb', function (err, db) {
 	if(err) {
 		console.log('Error connecting to database localhost:27017/hadrondb ', err)
 	} else {
- 		require('./authentication-server')(db, application, genericConstants);
+ 		require('./authentication-server')(db, application, genericConstants, tokenHandler);
  	}
 });
 

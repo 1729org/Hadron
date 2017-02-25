@@ -4,19 +4,31 @@ import { Path } from '../models/path';
 import { GraphicDocument } from '../models/graphic-document';
 import { Collaboration } from '../models/collaboration';
 import { Board } from '../models/board';
-
+import { BoardSignature} from '../models/board-signature';
 
 
 export class Tools {
+	public static mapToBoardList(data :Array<any>) :Array<BoardSignature> {
+		if(!data) {
+			return null;
+		} else {
+			let boardList = [];
+			for(let boardSignature of data) {
+				boardList.push(new BoardSignature(boardSignature.name, boardSignature.isShared));
+			}
+			return boardList;
+		}
+	}
+
 	public static mapToBoard(data: any) :Board {
-		if(!data.board) {
+		console.log(data);
+		if(!data) {
         		return null;
     	} else {
-			let boardInst = new Board(data.board.name, 
-                new Date(data.board.lastModifiedDate));
-                boardInst.textDocument = Tools.mapToTextDocument(data.board.textDocument);
-    			boardInst.graphicDocument = Tools.mapToGraphicDocument(data.board.graphicDocument);
-    			boardInst.collaboration = Tools.mapToCollaboration(data.board.collaboration);
+			let boardInst = new Board(data.name, data.ownerEmail);
+                boardInst.textDocument = Tools.mapToTextDocument(data.textDocument);
+    			boardInst.graphicDocument = Tools.mapToGraphicDocument(data.graphicDocument);
+    			boardInst.collaboration = Tools.mapToCollaboration(data.collaboration);
     		return boardInst;
     	}
 	}

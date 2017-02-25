@@ -7,11 +7,11 @@ export class Board {
 	private _textDocument :TextDocument;
 	private _graphicDocument :GraphicDocument;
 	private _collaboration :Collaboration;
-	private _lastModifiedDate :Date;
+	private _ownerEmail :string;
 
-	constructor(name :string, lastModifiedDate :Date) {
+	constructor(name :string, ownerEmail :string) {
 		this._name = name;
-		this._lastModifiedDate = lastModifiedDate;
+		this._ownerEmail = ownerEmail;
 	}
 
 	set name(name :string) {
@@ -46,11 +46,11 @@ export class Board {
 		return this._collaboration;
 	}
 
-	set lastModifiedDate(lastModifiedDate :Date) {
-		this._lastModifiedDate = lastModifiedDate;
+	set ownerEmail(ownerEmail :string) {
+		this._ownerEmail = ownerEmail;
 	}
 
-	get lastModifiedDate() :Date {
-		return this.lastModifiedDate;
+	get ownerEmail() :string {
+		return this.ownerEmail;
 	}
 }
