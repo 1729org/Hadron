@@ -1,8 +1,28 @@
 var User = (function () {
     function User(email, assignedUserColor) {
-        this.email = email;
-        this.assignedUserColor = assignedUserColor;
+        this._email = email;
+        this._assignedUserColor = assignedUserColor;
     }
+    Object.defineProperty(User.prototype, "email", {
+        get: function () {
+            return this._email;
+        },
+        set: function (email) {
+            this._email = email;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(User.prototype, "assignedUserColor", {
+        get: function () {
+            return this._assignedUserColor;
+        },
+        set: function (assignedUserColor) {
+            this._assignedUserColor = assignedUserColor;
+        },
+        enumerable: true,
+        configurable: true
+    });
     return User;
 }());
 export { User };

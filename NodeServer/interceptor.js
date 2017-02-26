@@ -16,7 +16,7 @@ module.exports = function(application,
 		var token = req.headers['x-auth-token'];
 		
 		if(!token){
-			return res.status(genericConstants.UNAUTHORIZED).json({
+			return res.status(genericConstants.FORBIDDEN).json({
 				message: genericConstants.INVALID_TOKEN.message
 			});	
 		}
@@ -24,7 +24,7 @@ module.exports = function(application,
 		try {
 			jwt.verify(token, secretKey);
 		} catch(ex) {
-			return res.status(genericConstants.UNAUTHORIZED).json({
+			return res.status(genericConstants.FORBIDDEN).json({
 				message: genericConstants.INVALID_TOKEN.message
 			});
 		}

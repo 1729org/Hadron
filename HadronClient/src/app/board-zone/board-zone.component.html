@@ -1,2 +1,35 @@
-<md-toolbar>{{boardName}}</md-toolbar>
-<quill-editor></quill-editor>
+<div (window:keydown.shift.b)="changeBoard()" 
+	(window:keydown.alt.b)="newBoard()"
+	(window:keydown.alt.t)="newTextDocument()"
+	(window:keydown.shift.t)="changeTextDocument()">
+	<md-toolbar>
+		<span *ngIf="showChangeBoardNameInput == false" (click)="showChangeBoardName()">
+			{{boardName}}
+		</span>
+		<span *ngIf="showChangeBoardNameInput == true">
+			<md-input-container class="example-full-width">
+				<input #boardNameInput [(ngModel)]="newBoardName" mdInput placeholder="New name" (keydown.Enter)="changeBoardName()" (blur)="hideBoardNameInput()" (focus)="focusedBoardNameInput()">
+			</md-input-container>
+		</span>
+		<div class="col-10">
+		</div>
+		<button md-button (click)="clearAndLogout()"><md-icon>exit_to_app</md-icon>Logout</button>
+	</md-toolbar>
+	<div class="row align-items-center">
+		<div class="col-12 align-items-center">
+			<span *ngIf="showChangeTextDocumentNameInput == false" (click)="showChangeTextDocumentName()">
+				{{textDocumentName}}
+			</span>
+			<span *ngIf="showChangeTextDocumentNameInput == true">
+				<md-input-container class="example-full-width">
+					<input #textDocumentNameInput [(ngModel)]="newTextDocumentName" mdInput placeholder="New name" (keydown.Enter)="changeTextDocumentName()" (blur)="hideTextDocumentNameInput()" (focus)="focusedTextDocumentNameInput()">
+				</md-input-container>
+			</span>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-12">
+			<quill-editor (onEditorCreated)="setQuillEditor($event)" [modules]="quillModules"></quill-editor>
+		</div>
+	</div>
+</div>

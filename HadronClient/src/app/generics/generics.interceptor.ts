@@ -1,9 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Rx';
 import { Http, RequestOptions, ConnectionBackend, Request, RequestOptionsArgs, Response, Headers } from '@angular/http';
+import { Subject } from 'rxjs/Subject';
 
 @Injectable()
 export class HadronHttp extends Http {
+  private logout = new Subject<boolean>();
+
+  logout$ = this.logout.asObservable();
+
   constructor(backend: ConnectionBackend, defaultOptions: RequestOptions) {
       super(backend, defaultOptions);
   }
@@ -57,6 +62,7 @@ export class HadronHttp extends Http {
             }
           }
           if (err.status  === 403) {
+              this.logout.next(true);
               return Observable.empty();
               
           }

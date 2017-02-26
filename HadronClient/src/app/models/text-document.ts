@@ -1,11 +1,10 @@
 export class TextDocument {
 	private _name :string;
 	private _content :any;
-	private _lastModifiedDate :Date;
+	private _roomId :string;
 
-	constructor(name :string, lastModifiedDate :Date) {
+	constructor(name :string) {
 		this._name = name;
-		this._lastModifiedDate = lastModifiedDate;
 	}
 
 	set name(name :string) {
@@ -24,11 +23,11 @@ export class TextDocument {
 		return this._content;
 	}
 
-	set lastModifiedDate(lastModifiedDate :Date) {
-		this._lastModifiedDate = lastModifiedDate;
+	set roomId(roomId :string) {
+		this._roomId = roomId;
 	}
 
-	get lastModifiedDate() :Date {
-		return this._lastModifiedDate;
+	get roomId() :string {
+		return this._roomId;
 	}
 }

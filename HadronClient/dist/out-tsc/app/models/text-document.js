@@ -1,7 +1,6 @@
 var TextDocument = (function () {
-    function TextDocument(name, lastModifiedDate) {
+    function TextDocument(name) {
         this._name = name;
-        this._lastModifiedDate = lastModifiedDate;
     }
     Object.defineProperty(TextDocument.prototype, "name", {
         get: function () {
@@ -23,12 +22,12 @@ var TextDocument = (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(TextDocument.prototype, "lastModifiedDate", {
+    Object.defineProperty(TextDocument.prototype, "roomId", {
         get: function () {
-            return this._lastModifiedDate;
+            return this._roomId;
         },
-        set: function (lastModifiedDate) {
-            this._lastModifiedDate = lastModifiedDate;
+        set: function (roomId) {
+            this._roomId = roomId;
         },
         enumerable: true,
         configurable: true

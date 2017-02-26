@@ -11,6 +11,9 @@ import { FacebookComponent } from './authentication-zone/facebook-login/facebook
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { HadronHttp } from './generics/generics.interceptor';
 import { BoardService } from './board-zone/board/board.service';
+import { BoardNewDialogComponent } from './board-zone/board-new-dialog/board-new-dialog.component';
+import { BoardListDialogComponent } from './board-zone/board-list-dialog/board-list-dialog.component';
+import { TextDocumentNewDialogComponent } from './board-zone/text-document-new-dialog/text-document-new-dialog.component';
 import { AuthenticationService } from './authentication-zone/app-authentication/authentication.service';
 import { MaterialModule } from '@angular/material';
 import { QuillModule } from 'ngx-quill';
@@ -36,6 +39,9 @@ const appRoutes: Routes = [
 @NgModule({
   declarations: [
     BoardDialogComponent,
+    BoardNewDialogComponent,
+    BoardListDialogComponent,
+    TextDocumentNewDialogComponent,
     AuthenticationZoneComponent,
     BoardZoneComponent,
     AppComponent,
@@ -51,7 +57,10 @@ const appRoutes: Routes = [
     RouterModule.forRoot(appRoutes)
   ],
   entryComponents: [
-    BoardDialogComponent
+    BoardDialogComponent,
+    BoardNewDialogComponent,
+    BoardListDialogComponent,
+    TextDocumentNewDialogComponent
   ],
   providers: [{
       provide: HadronHttp,

@@ -14,8 +14,9 @@ export class Tools {
 		} else {
 			let boardList = [];
 			for(let boardSignature of data) {
-				boardList.push(new BoardSignature(boardSignature.name, boardSignature.isShared));
+				boardList.push(new BoardSignature(boardSignature.name, boardSignature.ownerEmail, boardSignature.isShared));
 			}
+			console.log(boardList);
 			return boardList;
 		}
 	}
@@ -37,7 +38,11 @@ export class Tools {
 		if(!data) {
 			return null;
 		} else {
-			let textDocument = new TextDocument(data.name, data.lastModifiedDate);
+			console.log(data.name);
+			let textDocument = new TextDocument(data.name);
+			if(data.roomId) {
+				textDocument.roomId = data.roomId;
+			}
 			if(data.content) {
 				textDocument.content = data.content;
 			}

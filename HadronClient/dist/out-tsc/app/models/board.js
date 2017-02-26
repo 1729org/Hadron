@@ -45,7 +45,7 @@ var Board = (function () {
     });
     Object.defineProperty(Board.prototype, "ownerEmail", {
         get: function () {
-            return this.ownerEmail;
+            return this._ownerEmail;
         },
         set: function (ownerEmail) {
             this._ownerEmail = ownerEmail;

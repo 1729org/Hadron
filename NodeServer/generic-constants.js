@@ -20,6 +20,7 @@ module.exports = function () {
 		SAVE_TEXT_DOCUMENT_URL: '/textDocument/save',
 		GET_TEXT_DOCUMENT_BY_NAME_URL: '/textDocument/name',
 		GET_TEXT_DOCUMENT_LIST_URL: '/textDocument/list',
+		CREATE_TEXT_DOCUMENT_URL: '/textDocument/create',
 
 		INVALID_TOKEN: new Error('INVALID_TOKEN'),
 		UNKNOWN_USER: new Error('UNKNOWN_USER'),

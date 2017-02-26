@@ -2,7 +2,7 @@ import { Component, NgZone } from '@angular/core';
 import { Board } from '../models/board';
 import { BoardService } from '../board-zone/board/board.service';
 import { AuthenticationService } from './app-authentication/authentication.service';
-import { MdDialog, MdDialogRef } from '@angular/material';
+import { MdDialog } from '@angular/material';
 import { BoardDialogComponent } from './board-dialog/board-dialog.component';
 import { Router } from '@angular/router';
 
@@ -25,6 +25,7 @@ export class AuthenticationZoneComponent {
    }
 
    onAuthentication(authentication :[boolean, Board]) {
+     console.log(authentication);
      this.zone.run(() => {
        this.authenticated = authentication[0];
      });
@@ -37,6 +38,9 @@ export class AuthenticationZoneComponent {
          .afterClosed().subscribe(result => {
           this.createBoard(result);
         });
+       } else if(authentication[1]) {
+         this.boardService.setBoard(authentication[1]);
+         this.router.navigateByUrl('/board');
        }
      }
    }
@@ -56,6 +60,7 @@ export class AuthenticationZoneComponent {
       this.boardService
      .getLastModifiedBoard()
      .subscribe(data => {
+         console.log(data);
          this.router.navigateByUrl('/board');
        },
        error => {

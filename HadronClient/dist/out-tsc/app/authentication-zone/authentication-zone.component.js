@@ -26,6 +26,7 @@ var AuthenticationZoneComponent = (function () {
     }
     AuthenticationZoneComponent.prototype.onAuthentication = function (authentication) {
         var _this = this;
+        console.log(authentication);
         this.zone.run(function () {
             _this.authenticated = authentication[0];
         });
@@ -38,6 +39,10 @@ var AuthenticationZoneComponent = (function () {
                     .afterClosed().subscribe(function (result) {
                     _this.createBoard(result);
                 });
+            }
+            else if (authentication[1]) {
+                this.boardService.setBoard(authentication[1]);
+                this.router.navigateByUrl('/board');
             }
         }
     };
@@ -56,6 +61,7 @@ var AuthenticationZoneComponent = (function () {
         this.boardService
             .getLastModifiedBoard()
             .subscribe(function (data) {
+            console.log(data);
             _this.router.navigateByUrl('/board');
         }, function (error) {
         });

@@ -51,6 +51,6 @@ export class Board {
 	}
 
 	get ownerEmail() :string {
-		return this.ownerEmail;
+		return this._ownerEmail;
 	}
 }

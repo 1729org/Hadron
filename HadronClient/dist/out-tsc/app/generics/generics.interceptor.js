@@ -15,10 +15,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Rx';
 import { Http, RequestOptions, ConnectionBackend, Headers } from '@angular/http';
+import { Subject } from 'rxjs/Subject';
 var HadronHttp = (function (_super) {
     __extends(HadronHttp, _super);
     function HadronHttp(backend, defaultOptions) {
-        return _super.call(this, backend, defaultOptions) || this;
+        var _this = _super.call(this, backend, defaultOptions) || this;
+        _this.logout = new Subject();
+        _this.logout$ = _this.logout.asObservable();
+        return _this;
     }
     HadronHttp.prototype.request = function (url, options) {
         console.log(url);
@@ -64,6 +68,7 @@ var HadronHttp = (function (_super) {
                 }
             }
             if (err.status === 403) {
+                _this.logout.next(true);
                 return Observable.empty();
             }
             return Observable.throw(err);

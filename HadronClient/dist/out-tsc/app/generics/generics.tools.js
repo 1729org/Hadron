@@ -16,8 +16,9 @@ var Tools = (function () {
             var boardList = [];
             for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
                 var boardSignature = data_1[_i];
-                boardList.push(new BoardSignature(boardSignature.name, boardSignature.isShared));
+                boardList.push(new BoardSignature(boardSignature.name, boardSignature.ownerEmail, boardSignature.isShared));
             }
+            console.log(boardList);
             return boardList;
         }
     };
@@ -39,7 +40,11 @@ var Tools = (function () {
             return null;
         }
         else {
-            var textDocument = new TextDocument(data.name, data.lastModifiedDate);
+            console.log(data.name);
+            var textDocument = new TextDocument(data.name);
+            if (data.roomId) {
+                textDocument.roomId = data.roomId;
+            }
             if (data.content) {
                 textDocument.content = data.content;
             }

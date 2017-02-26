@@ -14,13 +14,20 @@ import { Headers } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
 import { HadronHttp } from '../../generics/generics.interceptor';
 import { Tools } from '../../generics/generics.tools';
+import { User } from '../../models/user';
+import { JwtHelper } from 'angular2-jwt';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/map';
 var AuthenticationService = (function () {
     function AuthenticationService(hadronHttp) {
         this.hadronHttp = hadronHttp;
+        this.jwtHelper = new JwtHelper;
+        if (this.isAuthenticated()) {
+            this.setClaims(localStorage.getItem('token'));
+        }
     }
     AuthenticationService.prototype.authenticate = function (email) {
+        var _this = this;
         var authHeader = new Headers();
         authHeader.append('Authorization', btoa(email));
         return this.hadronHttp
@@ -29,7 +36,8 @@ var AuthenticationService = (function () {
         })
             .map(function (response) {
             var toReturn = [response.headers.get('x-auth-token') != null];
-            var board = Tools.mapToBoard(response.json().data);
+            var board = Tools.mapToBoard(response.json());
+            _this.setClaims(response.headers.get('x-auth-token'));
             toReturn.push(board);
             return toReturn;
         })
@@ -41,7 +49,15 @@ var AuthenticationService = (function () {
     AuthenticationService.prototype.isAuthenticated = function () {
         return localStorage.getItem('token') != null;
     };
+    AuthenticationService.prototype.logout = function () {
+        localStorage.removeItem('token');
+    };
+    AuthenticationService.prototype.setClaims = function (token) {
+        var decoded = this.jwtHelper.decodeToken(token);
+        this.user = new User(decoded.email, decoded.assignedUserColor);
+    };
     AuthenticationService.prototype.getClaims = function () {
+        return this.user;
     };
     return AuthenticationService;
 }());
