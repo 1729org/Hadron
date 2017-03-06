@@ -1,4 +1,4 @@
-import { Comparable } from '../models/comparable';
+import { Comparable } from './comparable';
 
 export class PriorityQueue <T extends Comparable<T>>{
 	private queue :Array<T>;

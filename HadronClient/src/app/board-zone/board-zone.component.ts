@@ -8,6 +8,7 @@ import { BoardListDialogComponent } from './board-list-dialog/board-list-dialog.
 import { BoardNewDialogComponent } from './board-new-dialog/board-new-dialog.component';
 import { TextDocumentNewDialogComponent } from './text-document-new-dialog/text-document-new-dialog.component';
 import { BoardConstants } from '../board-zone/board/board.constants';
+import { RoadMapDialogComponent } from './road-map-dialog/road-map-dialog.component';
 import * as Quill from 'quill';
 
 const Parchment = Quill.import('parchment');
@@ -19,6 +20,7 @@ Quill.register(Block, true);
 @Component({
   selector: 'board-zone',
   templateUrl: './board-zone.component.html',
+  styleUrls: ['./board-zone.component.css']
 })
 export class BoardZoneComponent {
    private boardName :string;
@@ -46,9 +48,11 @@ export class BoardZoneComponent {
        this.router.navigateByUrl('/login');
      }
      if(!boardService.hasBoard()) {
+       console.log('does not have board');
        boardService.getLastModifiedBoard().subscribe(data => {
          this.zone.run(() => {
            this.boardName = boardService.getCurrentBoardName();
+            console.log('here');
            this.textDocumentName = boardService.getCurrentTextDocumentName();
          });
        }, error => {});
@@ -61,10 +65,7 @@ export class BoardZoneComponent {
    }
 
    setQuillEditor(event) {
-     this.quillEditor = event;
-     this.quillEditor.on('text-change', (a,b,c,d) => {
-       console.log(a,b,c,d);
-     });
+     this.boardService.setQuillEditor(event);
    }
 
    changeBoard() {
@@ -82,6 +83,15 @@ export class BoardZoneComponent {
               });
             }, error => {});
           }
+          console.log(result);
+     });
+   }
+
+   showRoadMap() {
+     this.dialog.closeAll();
+     this.dialog
+     .open(RoadMapDialogComponent, {width: "65vw"})
+     .afterClosed().subscribe(result => {
           console.log(result);
      });
    }

@@ -17,6 +17,9 @@ import 'rxjs/add/operator/map';
 @Injectable()
 export class BoardService {
 	private board :Board;
+	private quillEditor :any;
+	private quillBuffer :Array<any>;
+	private saveTimerId :any;
 
 	private logout = new Subject<boolean>();
 	logout$ = this.logout.asObservable();
@@ -29,6 +32,7 @@ export class BoardService {
 				this.logout.next(true);
 			}
 	    });
+	    this.quillBuffer = [];
 	}
 
 	createBoard(name :string) {
@@ -66,6 +70,8 @@ export class BoardService {
         .map((response :Response) => {
         	console.log(response.json());
         	this.board = Tools.mapToBoard(response.json());
+        	console.log(this.board);
+        	this.updateQuillFromTextDocument();
 			return {};
         })
         .catch((error :Response | any) => {
@@ -82,7 +88,6 @@ export class BoardService {
         	newBoardName: newBoardName
          })
         .map((response :Response) => {
-        	this.board = Tools.mapToBoard(response.json());
 			return {};
         })
         .catch((error :Response | any) => {
@@ -99,7 +104,6 @@ export class BoardService {
         	newTextDocumentName: newTextDocumentName
          })
         .map((response :Response) => {
-        	this.board.textDocument = Tools.mapToTextDocument(response.json());
 			return {};
         })
         .catch((error :Response | any) => {
@@ -117,6 +121,7 @@ export class BoardService {
         })
         .map((response :Response) => {
         	this.board = Tools.mapToBoard(response.json());
+        	this.updateQuillFromTextDocument();
 			return {};
         })
         .catch((error :Response | any) => {
@@ -153,11 +158,51 @@ export class BoardService {
         });
 	}
 
-	setBoard(board :Board) {
-		this.board = board;
+	updateQuillFromTextDocument() {
+		console.log(this.board);
+		if(this.board && this.board.textDocument && this.board.textDocument.content && this.quillEditor) {
+			this.quillEditor.updateContents(this.board.textDocument.content, 'initial');
+			this.board.textDocument.content = null;
+		}
 	}
 
-	clearAndLogout() {
+	setBoard(board :Board) :void{
+		this.board = board;
+		this.updateQuillFromTextDocument();
+	}
+
+	saveTextDocumentContent() {
+		console.log('saving');
+		return this.hadronHttp
+        .post(`${GenericConstants.BASE_URL}${BoardConstants.SAVE_TEXT_DOCUMENT_URL}`, {
+        	ownerEmail: this.board.ownerEmail,
+        	boardName: this.board.name,
+        	textDocumentName: this.board.textDocument.name,
+        	delta: this.quillEditor.getContents()
+        })
+        .map((response :Response) => {
+			return {};
+        })
+        .catch((error :Response | any) => {
+			return Observable.throw(error);
+        });
+	}
+
+	setQuillEditor(quillEditor :any) :void {
+		this.quillEditor = quillEditor;
+		this.updateQuillFromTextDocument();
+		this.quillEditor.on('text-change', (newDelta, oldDelta, source) => {
+		  if(source !== 'initial') {
+		  	if(!this.saveTimerId) {
+		  		this.saveTimerId = setInterval(() => {
+		  			this.saveTextDocumentContent().subscribe(data=>{},error=>{});
+		  		}, BoardConstants.QUILL_SAVE_INTERVAL * 1000);
+		  	}
+		  }
+		});
+	}
+
+	clearAndLogout() :void{
 		this.authenticationService.logout();
 		this.board = null;
 	}

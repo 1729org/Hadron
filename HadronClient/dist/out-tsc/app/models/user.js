@@ -23,6 +23,16 @@ var User = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(User.prototype, "roadMap", {
+        get: function () {
+            return this._roadMap;
+        },
+        set: function (roadMap) {
+            this._roadMap = roadMap;
+        },
+        enumerable: true,
+        configurable: true
+    });
     return User;
 }());
 export { User };

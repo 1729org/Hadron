@@ -1,6 +1,9 @@
+import { RoadMap } from './road-map';
+
 export class User {
 	private _email :string;
 	private _assignedUserColor :string;
+	private _roadMap :RoadMap;
 
 	constructor(email :string, assignedUserColor :string) {
 		this._email = email;
@@ -21,5 +24,13 @@ export class User {
 
 	set assignedUserColor(assignedUserColor :string) {
 		this._assignedUserColor = assignedUserColor;
+	}
+
+	get roadMap() :RoadMap {
+		return this._roadMap;
+	}
+
+	set roadMap(roadMap :RoadMap) {
+		this._roadMap = roadMap;
 	}
 }

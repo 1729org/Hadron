@@ -22,7 +22,9 @@ import { BoardListDialogComponent } from './board-zone/board-list-dialog/board-l
 import { TextDocumentNewDialogComponent } from './board-zone/text-document-new-dialog/text-document-new-dialog.component';
 import { AuthenticationService } from './authentication-zone/app-authentication/authentication.service';
 import { MaterialModule } from '@angular/material';
+import { RoadMapDialogComponent } from './board-zone/road-map-dialog/road-map-dialog.component';
 import { QuillModule } from 'ngx-quill';
+import { VisModule } from 'ng2-vis';
 export function hadronHttpFactory(backend, defaultOptions) { return new HadronHttp(backend, defaultOptions); }
 var appRoutes = [
     {
@@ -49,6 +51,7 @@ AppModule = __decorate([
         declarations: [
             BoardDialogComponent,
             BoardNewDialogComponent,
+            RoadMapDialogComponent,
             BoardListDialogComponent,
             TextDocumentNewDialogComponent,
             AuthenticationZoneComponent,
@@ -60,6 +63,7 @@ AppModule = __decorate([
             BrowserModule,
             FormsModule,
             HttpModule,
+            VisModule,
             QuillModule,
             NgbModule.forRoot(),
             MaterialModule.forRoot(),
@@ -68,6 +72,7 @@ AppModule = __decorate([
         entryComponents: [
             BoardDialogComponent,
             BoardNewDialogComponent,
+            RoadMapDialogComponent,
             BoardListDialogComponent,
             TextDocumentNewDialogComponent
         ],

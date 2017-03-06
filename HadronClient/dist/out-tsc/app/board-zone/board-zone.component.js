@@ -16,6 +16,7 @@ import { BoardListDialogComponent } from './board-list-dialog/board-list-dialog.
 import { BoardNewDialogComponent } from './board-new-dialog/board-new-dialog.component';
 import { TextDocumentNewDialogComponent } from './text-document-new-dialog/text-document-new-dialog.component';
 import { BoardConstants } from '../board-zone/board/board.constants';
+import { RoadMapDialogComponent } from './road-map-dialog/road-map-dialog.component';
 import * as Quill from 'quill';
 var Parchment = Quill.import('parchment');
 var Block = Parchment.query('block');
@@ -39,9 +40,11 @@ var BoardZoneComponent = (function () {
             this.router.navigateByUrl('/login');
         }
         if (!boardService.hasBoard()) {
+            console.log('does not have board');
             boardService.getLastModifiedBoard().subscribe(function (data) {
                 _this.zone.run(function () {
                     _this.boardName = boardService.getCurrentBoardName();
+                    console.log('here');
                     _this.textDocumentName = boardService.getCurrentTextDocumentName();
                 });
             }, function (error) { });
@@ -54,10 +57,7 @@ var BoardZoneComponent = (function () {
         this.showChangeTextDocumentNameInput = false;
     }
     BoardZoneComponent.prototype.setQuillEditor = function (event) {
-        this.quillEditor = event;
-        this.quillEditor.on('text-change', function (a, b, c, d) {
-            console.log(a, b, c, d);
-        });
+        this.boardService.setQuillEditor(event);
     };
     BoardZoneComponent.prototype.changeBoard = function () {
         var _this = this;
@@ -75,6 +75,14 @@ var BoardZoneComponent = (function () {
                     });
                 }, function (error) { });
             }
+            console.log(result);
+        });
+    };
+    BoardZoneComponent.prototype.showRoadMap = function () {
+        this.dialog.closeAll();
+        this.dialog
+            .open(RoadMapDialogComponent, { width: "65vw" })
+            .afterClosed().subscribe(function (result) {
             console.log(result);
         });
     };
@@ -183,6 +191,7 @@ BoardZoneComponent = __decorate([
     Component({
         selector: 'board-zone',
         templateUrl: './board-zone.component.html',
+        styleUrls: ['./board-zone.component.css']
     }),
     __metadata("design:paramtypes", [BoardService,
         AuthenticationService,

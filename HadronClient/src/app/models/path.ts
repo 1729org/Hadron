@@ -1,4 +1,4 @@
-import { Comparable } from '../models/comparable';
+import { Comparable } from './comparable';
 
 export class Path extends Comparable<Path>{
 	private _colorStroke :string;

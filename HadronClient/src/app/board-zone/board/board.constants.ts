@@ -10,6 +10,7 @@ export class BoardConstants {
 
 	public static CHANGE_TEXT_DOCUMENT_NAME_URL :string = '/textDocument/changeName';
 	public static CREATE_TEXT_DOCUMENT_URL :string = '/textDocument/create';
+	public static SAVE_TEXT_DOCUMENT_URL :string = '/textDocument/save';
 
 	public static QUILL_MODULES :any = {
 	  formula: true,
@@ -36,4 +37,6 @@ export class BoardConstants {
 	    ['formula']
 	  ]
 	};
+
+	public static QUILL_SAVE_INTERVAL :number = 15;
 }

@@ -30,6 +30,7 @@ var BoardService = (function () {
                 _this.logout.next(true);
             }
         });
+        this.quillBuffer = [];
     }
     BoardService.prototype.createBoard = function (name) {
         var _this = this;
@@ -67,6 +68,8 @@ var BoardService = (function () {
             .map(function (response) {
             console.log(response.json());
             _this.board = Tools.mapToBoard(response.json());
+            console.log(_this.board);
+            _this.updateQuillFromTextDocument();
             return {};
         })
             .catch(function (error) {
@@ -75,7 +78,6 @@ var BoardService = (function () {
         });
     };
     BoardService.prototype.changeBoardName = function (newBoardName) {
-        var _this = this;
         return this.hadronHttp
             .post("" + GenericConstants.BASE_URL + BoardConstants.CHANGE_BOARD_NAME_URL, {
             ownerEmail: this.board.ownerEmail,
@@ -83,7 +85,6 @@ var BoardService = (function () {
             newBoardName: newBoardName
         })
             .map(function (response) {
-            _this.board = Tools.mapToBoard(response.json());
             return {};
         })
             .catch(function (error) {
@@ -91,7 +92,6 @@ var BoardService = (function () {
         });
     };
     BoardService.prototype.changeTextDocumentName = function (newTextDocumentName) {
-        var _this = this;
         return this.hadronHttp
             .post("" + GenericConstants.BASE_URL + BoardConstants.CHANGE_TEXT_DOCUMENT_NAME_URL, {
             boardName: this.board.name,
@@ -100,7 +100,6 @@ var BoardService = (function () {
             newTextDocumentName: newTextDocumentName
         })
             .map(function (response) {
-            _this.board.textDocument = Tools.mapToTextDocument(response.json());
             return {};
         })
             .catch(function (error) {
@@ -118,6 +117,7 @@ var BoardService = (function () {
         })
             .map(function (response) {
             _this.board = Tools.mapToBoard(response.json());
+            _this.updateQuillFromTextDocument();
             return {};
         })
             .catch(function (error) {
@@ -148,8 +148,46 @@ var BoardService = (function () {
             return Observable.throw(error);
         });
     };
+    BoardService.prototype.updateQuillFromTextDocument = function () {
+        console.log(this.board);
+        if (this.board && this.board.textDocument && this.board.textDocument.content && this.quillEditor) {
+            this.quillEditor.updateContents(this.board.textDocument.content, 'initial');
+            this.board.textDocument.content = null;
+        }
+    };
     BoardService.prototype.setBoard = function (board) {
         this.board = board;
+        this.updateQuillFromTextDocument();
+    };
+    BoardService.prototype.saveTextDocumentContent = function () {
+        console.log('saving');
+        return this.hadronHttp
+            .post("" + GenericConstants.BASE_URL + BoardConstants.SAVE_TEXT_DOCUMENT_URL, {
+            ownerEmail: this.board.ownerEmail,
+            boardName: this.board.name,
+            textDocumentName: this.board.textDocument.name,
+            delta: this.quillEditor.getContents()
+        })
+            .map(function (response) {
+            return {};
+        })
+            .catch(function (error) {
+            return Observable.throw(error);
+        });
+    };
+    BoardService.prototype.setQuillEditor = function (quillEditor) {
+        var _this = this;
+        this.quillEditor = quillEditor;
+        this.updateQuillFromTextDocument();
+        this.quillEditor.on('text-change', function (newDelta, oldDelta, source) {
+            if (source !== 'initial') {
+                if (!_this.saveTimerId) {
+                    _this.saveTimerId = setInterval(function () {
+                        _this.saveTextDocumentContent().subscribe(function (data) { }, function (error) { });
+                    }, BoardConstants.QUILL_SAVE_INTERVAL * 1000);
+                }
+            }
+        });
     };
     BoardService.prototype.clearAndLogout = function () {
         this.authenticationService.logout();

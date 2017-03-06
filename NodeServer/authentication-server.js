@@ -122,18 +122,22 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
   		var data = req.body;
   		var ownerEmail = data.ownerEmail;
   		var boardName = data.boardName;
-  		var documentName = data.documentName;
-  		var deltaArr = data.delta;
+  		var textDocumentName = data.textDocumentName;
+  		var delta = data.delta;
 
-  		hadronUsersCollection
-  		.update({email: ownerEmail, 'boards.name': boardName, 'boards.textDocuments.name': documentName}, 
-  			{ $push: { 'boards.textDocuments.content': { $each: deltaArr} } })
-  		.then(function() {
-  			return res.status(200).json({});
-  		})
-  		.catch(function(err) {
-  			return res.status(500).json({message: err.message});
-  		});
+      console.log(data);
+
+      db.eval('function(ownerEmail, boardName, textDocumentName, delta){var document = db.hadronUsers.findOne({email: ownerEmail}); for(var i=0;i<document.boards.length;i++){if(document.boards[i].name === boardName){var board = document.boards[i]; for(var j=0;j<board.textDocuments.length;j++){if(board.textDocuments[j].name === textDocumentName){ document.boards[i].textDocuments[j].content = delta;  db.hadronUsers.save(document); return {saved: true}; }}}} return {saved: false};}',[ownerEmail, boardName, textDocumentName, delta])
+      .then(function(response) {
+          if(response.saved) {
+            res.status(200).json({});
+          } else {
+            res.status(401).json({});
+          }
+      })
+      .catch(function(err) {
+        return res.status(500).json({message: err.message});
+      });
   	});
 
   	application.post(genericConstants.GET_BOARD_BY_NAME_URL, function(req, res) {
