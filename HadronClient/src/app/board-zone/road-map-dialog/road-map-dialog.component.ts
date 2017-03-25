@@ -73,7 +73,9 @@ export class RoadMapDialogComponent {
             edges: edges
         };
 
-        this.visNetworkOptions = {};
+        this.visNetworkOptions =  {
+		};
+
     }
 
     public ngOnDestroy(): void {

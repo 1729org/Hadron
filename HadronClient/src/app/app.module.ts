@@ -12,11 +12,13 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { HadronHttp } from './generics/generics.interceptor';
 import { BoardService } from './board-zone/board/board.service';
 import { BoardNewDialogComponent } from './board-zone/board-new-dialog/board-new-dialog.component';
+import { BoardShareDialogComponent } from './board-zone/board-share-dialog/board-share-dialog.component';
 import { BoardListDialogComponent } from './board-zone/board-list-dialog/board-list-dialog.component';
 import { TextDocumentNewDialogComponent } from './board-zone/text-document-new-dialog/text-document-new-dialog.component';
 import { AuthenticationService } from './authentication-zone/app-authentication/authentication.service';
 import { MaterialModule } from '@angular/material';
 import { RoadMapDialogComponent } from './board-zone/road-map-dialog/road-map-dialog.component';
+import { TextDocumentListDialogComponent } from './board-zone/text-document-list-dialog/text-document-list-dialog.component';
 import { QuillModule } from 'ngx-quill';
 import { VisModule } from 'ng2-vis';
 
@@ -41,10 +43,12 @@ const appRoutes: Routes = [
 @NgModule({
   declarations: [
     BoardDialogComponent,
+    BoardShareDialogComponent,
     BoardNewDialogComponent,
     RoadMapDialogComponent,
     BoardListDialogComponent,
     TextDocumentNewDialogComponent,
+    TextDocumentListDialogComponent,
     AuthenticationZoneComponent,
     BoardZoneComponent,
     AppComponent,
@@ -62,10 +66,12 @@ const appRoutes: Routes = [
   ],
   entryComponents: [
     BoardDialogComponent,
+    BoardShareDialogComponent,
     BoardNewDialogComponent,
     RoadMapDialogComponent,
     BoardListDialogComponent,
-    TextDocumentNewDialogComponent
+    TextDocumentNewDialogComponent,
+    TextDocumentListDialogComponent
   ],
   providers: [{
       provide: HadronHttp,

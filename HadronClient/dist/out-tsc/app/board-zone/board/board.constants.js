@@ -9,9 +9,13 @@ BoardConstants.GET_LAST_MODIFIED_BOARD_URL = '/board/latest';
 BoardConstants.GET_BOARD_BY_NAME_URL = '/board/name';
 BoardConstants.LIST_BOARDS_URL = '/board/list';
 BoardConstants.CHANGE_BOARD_NAME_URL = '/board/changeName';
+BoardConstants.GET_BOARD_MEMBERS_URL = '/board/members';
+BoardConstants.SHARE_BOARD_URL = '/board/share';
 BoardConstants.CHANGE_TEXT_DOCUMENT_NAME_URL = '/textDocument/changeName';
 BoardConstants.CREATE_TEXT_DOCUMENT_URL = '/textDocument/create';
+BoardConstants.GET_TEXT_DOCUMENT_BY_NAME_URL = '/textDocument/name';
 BoardConstants.SAVE_TEXT_DOCUMENT_URL = '/textDocument/save';
+BoardConstants.LIST_TEXT_DOCUMENTS_URL = '/textDocument/list';
 BoardConstants.QUILL_MODULES = {
     formula: true,
     toolbar: [
@@ -33,4 +37,5 @@ BoardConstants.QUILL_MODULES = {
     ]
 };
 BoardConstants.QUILL_SAVE_INTERVAL = 15;
+BoardConstants.IDLE_INTERVAL = 3;
 //# sourceMappingURL=C:/Old/Hadron/HadronClient/src/app/board-zone/board/board.constants.js.map

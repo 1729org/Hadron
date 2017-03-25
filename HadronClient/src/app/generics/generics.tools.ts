@@ -9,6 +9,7 @@ import { BoardSignature} from '../models/board-signature';
 
 export class Tools {
 	public static mapToBoardList(data :Array<any>) :Array<BoardSignature> {
+
 		if(!data) {
 			return null;
 		} else {
@@ -16,7 +17,6 @@ export class Tools {
 			for(let boardSignature of data) {
 				boardList.push(new BoardSignature(boardSignature.name, boardSignature.ownerEmail, boardSignature.isShared));
 			}
-			console.log(boardList);
 			return boardList;
 		}
 	}
@@ -35,15 +35,16 @@ export class Tools {
 	}
 
 	public static mapToTextDocument(data :any) :TextDocument {
+		console.log(data);
 		if(!data) {
 			return null;
 		} else {
-			console.log(data.name);
 			let textDocument = new TextDocument(data.name);
 			if(data.roomId) {
 				textDocument.roomId = data.roomId;
 			}
 			if(data.content) {
+				console.log('has content');
 				textDocument.content = data.content;
 			}
 			return textDocument;

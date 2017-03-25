@@ -6,11 +6,14 @@ export class BoardConstants {
 	public static GET_BOARD_BY_NAME_URL :string = '/board/name';
 	public static LIST_BOARDS_URL :string = '/board/list';
 	public static CHANGE_BOARD_NAME_URL :string = '/board/changeName';
-
+	public static GET_BOARD_MEMBERS_URL :string = '/board/members';
+	public static SHARE_BOARD_URL :string = '/board/share';
 
 	public static CHANGE_TEXT_DOCUMENT_NAME_URL :string = '/textDocument/changeName';
 	public static CREATE_TEXT_DOCUMENT_URL :string = '/textDocument/create';
+	public static GET_TEXT_DOCUMENT_BY_NAME_URL :string = '/textDocument/name';
 	public static SAVE_TEXT_DOCUMENT_URL :string = '/textDocument/save';
+	public static LIST_TEXT_DOCUMENTS_URL :string = '/textDocument/list';
 
 	public static QUILL_MODULES :any = {
 	  formula: true,
@@ -39,4 +42,5 @@ export class BoardConstants {
 	};
 
 	public static QUILL_SAVE_INTERVAL :number = 15;
+	public static IDLE_INTERVAL :number = 3;
 }

@@ -62,18 +62,40 @@ var BoardService = (function () {
     };
     BoardService.prototype.getLastModifiedBoard = function () {
         var _this = this;
-        console.log('lastmodif');
         return this.hadronHttp
             .get("" + GenericConstants.BASE_URL + BoardConstants.GET_LAST_MODIFIED_BOARD_URL)
             .map(function (response) {
-            console.log(response.json());
             _this.board = Tools.mapToBoard(response.json());
-            console.log(_this.board);
+            console.log(_this.board.textDocument.content);
             _this.updateQuillFromTextDocument();
             return {};
         })
             .catch(function (error) {
-            console.log(error);
+            return Observable.throw(error);
+        });
+    };
+    BoardService.prototype.getMembers = function () {
+        return this.hadronHttp
+            .post("" + GenericConstants.BASE_URL + BoardConstants.GET_BOARD_MEMBERS_URL, {
+            boardName: this.board.name
+        })
+            .map(function (response) {
+            return response.json() || {};
+        })
+            .catch(function (error) {
+            return Observable.throw(error);
+        });
+    };
+    BoardService.prototype.shareBoard = function (email) {
+        return this.hadronHttp
+            .post("" + GenericConstants.BASE_URL + BoardConstants.SHARE_BOARD_URL, {
+            shareEmail: email,
+            boardName: this.board.name
+        })
+            .map(function (response) {
+            return response.json() || {};
+        })
+            .catch(function (error) {
             return Observable.throw(error);
         });
     };
@@ -108,6 +130,13 @@ var BoardService = (function () {
     };
     BoardService.prototype.getBoard = function (ownerEmail, boardName) {
         var _this = this;
+        if (this.saveTimerId) {
+            clearInterval(this.saveTimerId);
+            this.saveTimerId = null;
+            this.lastModifiedTime = null;
+        }
+        this.saveTextDocumentContent()
+            .subscribe(function (data) { }, function (error) { });
         /*let params: URLSearchParams = new URLSearchParams();
         params.set('name', name);*/
         return this.hadronHttp
@@ -130,11 +159,13 @@ var BoardService = (function () {
     BoardService.prototype.isOwner = function () {
         return this.authenticationService.getClaims().email === this.board.ownerEmail;
     };
+    BoardService.prototype.getOwnerEmail = function () {
+        return this.board.ownerEmail;
+    };
     BoardService.prototype.getCurrentBoardName = function () {
         return this.board.name;
     };
     BoardService.prototype.getCurrentTextDocumentName = function () {
-        console.log(this.board.textDocument.name);
         return this.board.textDocument.name;
     };
     BoardService.prototype.getBoardList = function () {
@@ -148,11 +179,47 @@ var BoardService = (function () {
             return Observable.throw(error);
         });
     };
+    BoardService.prototype.getTextDocumentList = function () {
+        return this.hadronHttp
+            .post("" + GenericConstants.BASE_URL + BoardConstants.LIST_TEXT_DOCUMENTS_URL, {
+            boardName: this.board.name
+        })
+            .map(function (response) {
+            var textDocumentList = Tools.mapToBoardList(response.json());
+            return textDocumentList || {};
+        })
+            .catch(function (error) {
+            return Observable.throw(error);
+        });
+    };
+    BoardService.prototype.getTextDocument = function (ownerEmail, name) {
+        var _this = this;
+        if (this.saveTimerId) {
+            clearInterval(this.saveTimerId);
+            this.saveTimerId = null;
+            this.lastModifiedTime = null;
+        }
+        this.saveTextDocumentContent()
+            .subscribe(function (data) { }, function (error) { });
+        return this.hadronHttp
+            .post("" + GenericConstants.BASE_URL + BoardConstants.GET_TEXT_DOCUMENT_BY_NAME_URL, {
+            ownerEmail: ownerEmail,
+            boardName: this.board.name,
+            textDocumentName: name
+        })
+            .map(function (response) {
+            var textDocument = Tools.mapToTextDocument(response.json());
+            _this.board.textDocument = textDocument;
+            _this.updateQuillFromTextDocument();
+            return textDocument || {};
+        })
+            .catch(function (error) {
+            return Observable.throw(error);
+        });
+    };
     BoardService.prototype.updateQuillFromTextDocument = function () {
-        console.log(this.board);
         if (this.board && this.board.textDocument && this.board.textDocument.content && this.quillEditor) {
-            this.quillEditor.updateContents(this.board.textDocument.content, 'initial');
-            this.board.textDocument.content = null;
+            this.quillEditor.setContents(this.board.textDocument.content, 'initial');
         }
     };
     BoardService.prototype.setBoard = function (board) {
@@ -180,9 +247,15 @@ var BoardService = (function () {
         this.quillEditor = quillEditor;
         this.updateQuillFromTextDocument();
         this.quillEditor.on('text-change', function (newDelta, oldDelta, source) {
+            console.log(newDelta);
+            _this.lastModifiedTime = Date.now();
             if (source !== 'initial') {
                 if (!_this.saveTimerId) {
                     _this.saveTimerId = setInterval(function () {
+                        if (Date.now() - _this.lastModifiedTime > (BoardConstants.IDLE_INTERVAL * 1000)) {
+                            clearInterval(_this.saveTimerId);
+                            _this.saveTimerId = null;
+                        }
                         _this.saveTextDocumentContent().subscribe(function (data) { }, function (error) { });
                     }, BoardConstants.QUILL_SAVE_INTERVAL * 1000);
                 }

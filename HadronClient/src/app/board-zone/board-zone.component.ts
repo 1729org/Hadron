@@ -1,4 +1,4 @@
-import { Component, NgZone } from '@angular/core';
+import { Component, NgZone, ViewChild } from '@angular/core';
 import { Board } from '../models/board';
 import { BoardService } from '../board-zone/board/board.service';
 import { Router } from '@angular/router';
@@ -9,6 +9,8 @@ import { BoardNewDialogComponent } from './board-new-dialog/board-new-dialog.com
 import { TextDocumentNewDialogComponent } from './text-document-new-dialog/text-document-new-dialog.component';
 import { BoardConstants } from '../board-zone/board/board.constants';
 import { RoadMapDialogComponent } from './road-map-dialog/road-map-dialog.component';
+import { TextDocumentListDialogComponent } from './text-document-list-dialog/text-document-list-dialog.component';
+import { BoardShareDialogComponent } from './board-share-dialog/board-share-dialog.component';
 import * as Quill from 'quill';
 
 const Parchment = Quill.import('parchment');
@@ -33,6 +35,9 @@ export class BoardZoneComponent {
    private textDocumentNameTimeoutId :any;
    private quillEditor :any;
    private quillModules :any = BoardConstants.QUILL_MODULES;
+
+   @ViewChild('sidenav')
+   private sidenav :any;
    
    constructor(private boardService :BoardService, 
      private authenticationService :AuthenticationService,
@@ -64,8 +69,37 @@ export class BoardZoneComponent {
      this.showChangeTextDocumentNameInput = false;
    }
 
+  openSideNav() {
+    if(!this.sidenav.isOpen) {
+      this.sidenav.toggle();
+    }
+  }
+
    setQuillEditor(event) {
      this.boardService.setQuillEditor(event);
+   }
+
+   shareBoard() {
+     if(this.boardService.isOwner()) {
+       this.dialog.closeAll();
+       this.boardService
+       .getMembers()
+       .subscribe(data => {
+          this.dialog
+         .open(BoardShareDialogComponent, {width: "55vw", data: data.userIds})
+         .afterClosed().subscribe(result => {
+                if(result && result.length !== 0) {
+                  console.log(data.userIds, result);
+                  if(data.userIds.indexOf(result) < 0 && data.userIds.indexOf(this.boardService.getOwnerEmail()) < 0) {
+                    this.boardService
+                    .shareBoard(result)
+                    .subscribe(data =>{},error=>{});
+                  }
+                }
+         });
+       }, error => {});
+       
+     }
    }
 
    changeBoard() {
@@ -124,6 +158,7 @@ export class BoardZoneComponent {
          .createTextDocument(result)
          .subscribe(data => {
            this.zone.run(() => {
+             console.log(this.boardService.getCurrentTextDocumentName());
              this.textDocumentName = this.boardService.getCurrentTextDocumentName();
            });
          }, error => {});
@@ -132,7 +167,22 @@ export class BoardZoneComponent {
    }
 
    changeTextDocument() {
-     console.log('change-text-document');
+     this.dialog.closeAll();
+     this.dialog
+     .open(TextDocumentListDialogComponent, {width: "55vw"})
+     .afterClosed().subscribe(result => {
+          if(result && result.name !== this.boardName) {
+            this.boardService
+            .getTextDocument(result.ownerEmail, result.name)
+            .subscribe(data => {
+              this.zone.run(() => {
+                console.log(this.boardService.getCurrentTextDocumentName());
+               this.textDocumentName = this.boardService.getCurrentTextDocumentName();
+              });
+            }, error => {});
+          }
+          console.log(result);
+     });
    }
 
    showChangeBoardName() {

@@ -1,9 +1,11 @@
 <div (window:keydown.shift.b)="changeBoard()" 
-	(window:keydown.alt.b)="newBoard()"
-	(window:keydown.alt.t)="newTextDocument()"
-	(window:keydown.shift.t)="changeTextDocument()"
-	(window:keydown.control.q)="showRoadMap()">
-	<md-toolbar>
+	 (window:keydown.alt.b)="newBoard()"
+	 (window:keydown.alt.t)="newTextDocument()"
+	 (window:keydown.shift.t)="changeTextDocument()"
+	 (window:keydown.control.q)="showRoadMap()"
+	 (window:keydown.shift.a)="openSideNav()"
+	 (window:keydown.alt.s)="shareBoard()">
+	<md-toolbar class="toolbar-size">
 		<span *ngIf="showChangeBoardNameInput == false" (click)="showChangeBoardName()">
 			{{boardName}}
 		</span>
@@ -12,12 +14,10 @@
 				<input #boardNameInput [(ngModel)]="newBoardName" mdInput placeholder="New name" (keydown.Enter)="changeBoardName()" (blur)="hideBoardNameInput()" (focus)="focusedBoardNameInput()">
 			</md-input-container>
 		</span>
-		<div class="col-10">
-		</div>
 		<button md-button (click)="clearAndLogout()"><md-icon>exit_to_app</md-icon>Logout</button>
 	</md-toolbar>
 	<div class="row align-items-center">
-		<div class="col-12 align-items-center">
+		<div class="col-11 align-items-center">
 			<span *ngIf="showChangeTextDocumentNameInput == false" (click)="showChangeTextDocumentName()">
 				{{textDocumentName}}
 			</span>
@@ -29,7 +29,7 @@
 		</div>
 	</div>
 	<div class="row container-height">
-		<div class="col-12">
+		<div class="col-11">
 			<quill-editor (onEditorCreated)="setQuillEditor($event)" [modules]="quillModules"></quill-editor>
 		</div>
 	</div>

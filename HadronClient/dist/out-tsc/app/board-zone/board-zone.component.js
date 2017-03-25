@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Component, NgZone } from '@angular/core';
+import { Component, NgZone, ViewChild } from '@angular/core';
 import { BoardService } from '../board-zone/board/board.service';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../authentication-zone/app-authentication/authentication.service';
@@ -17,6 +17,8 @@ import { BoardNewDialogComponent } from './board-new-dialog/board-new-dialog.com
 import { TextDocumentNewDialogComponent } from './text-document-new-dialog/text-document-new-dialog.component';
 import { BoardConstants } from '../board-zone/board/board.constants';
 import { RoadMapDialogComponent } from './road-map-dialog/road-map-dialog.component';
+import { TextDocumentListDialogComponent } from './text-document-list-dialog/text-document-list-dialog.component';
+import { BoardShareDialogComponent } from './board-share-dialog/board-share-dialog.component';
 import * as Quill from 'quill';
 var Parchment = Quill.import('parchment');
 var Block = Parchment.query('block');
@@ -56,8 +58,35 @@ var BoardZoneComponent = (function () {
         this.showChangeBoardNameInput = false;
         this.showChangeTextDocumentNameInput = false;
     }
+    BoardZoneComponent.prototype.openSideNav = function () {
+        if (!this.sidenav.isOpen) {
+            this.sidenav.toggle();
+        }
+    };
     BoardZoneComponent.prototype.setQuillEditor = function (event) {
         this.boardService.setQuillEditor(event);
+    };
+    BoardZoneComponent.prototype.shareBoard = function () {
+        var _this = this;
+        if (this.boardService.isOwner()) {
+            this.dialog.closeAll();
+            this.boardService
+                .getMembers()
+                .subscribe(function (data) {
+                _this.dialog
+                    .open(BoardShareDialogComponent, { width: "55vw", data: data.userIds })
+                    .afterClosed().subscribe(function (result) {
+                    if (result && result.length !== 0) {
+                        console.log(data.userIds, result);
+                        if (data.userIds.indexOf(result) < 0 && data.userIds.indexOf(_this.boardService.getOwnerEmail()) < 0) {
+                            _this.boardService
+                                .shareBoard(result)
+                                .subscribe(function (data) { }, function (error) { });
+                        }
+                    }
+                });
+            }, function (error) { });
+        }
     };
     BoardZoneComponent.prototype.changeBoard = function () {
         var _this = this;
@@ -115,6 +144,7 @@ var BoardZoneComponent = (function () {
                     .createTextDocument(result)
                     .subscribe(function (data) {
                     _this.zone.run(function () {
+                        console.log(_this.boardService.getCurrentTextDocumentName());
                         _this.textDocumentName = _this.boardService.getCurrentTextDocumentName();
                     });
                 }, function (error) { });
@@ -122,7 +152,23 @@ var BoardZoneComponent = (function () {
         });
     };
     BoardZoneComponent.prototype.changeTextDocument = function () {
-        console.log('change-text-document');
+        var _this = this;
+        this.dialog.closeAll();
+        this.dialog
+            .open(TextDocumentListDialogComponent, { width: "55vw" })
+            .afterClosed().subscribe(function (result) {
+            if (result && result.name !== _this.boardName) {
+                _this.boardService
+                    .getTextDocument(result.ownerEmail, result.name)
+                    .subscribe(function (data) {
+                    _this.zone.run(function () {
+                        console.log(_this.boardService.getCurrentTextDocumentName());
+                        _this.textDocumentName = _this.boardService.getCurrentTextDocumentName();
+                    });
+                }, function (error) { });
+            }
+            console.log(result);
+        });
     };
     BoardZoneComponent.prototype.showChangeBoardName = function () {
         var _this = this;
@@ -187,6 +233,10 @@ var BoardZoneComponent = (function () {
     };
     return BoardZoneComponent;
 }());
+__decorate([
+    ViewChild('sidenav'),
+    __metadata("design:type", Object)
+], BoardZoneComponent.prototype, "sidenav", void 0);
 BoardZoneComponent = __decorate([
     Component({
         selector: 'board-zone',

@@ -18,7 +18,6 @@ var Tools = (function () {
                 var boardSignature = data_1[_i];
                 boardList.push(new BoardSignature(boardSignature.name, boardSignature.ownerEmail, boardSignature.isShared));
             }
-            console.log(boardList);
             return boardList;
         }
     };
@@ -36,16 +35,17 @@ var Tools = (function () {
         }
     };
     Tools.mapToTextDocument = function (data) {
+        console.log(data);
         if (!data) {
             return null;
         }
         else {
-            console.log(data.name);
             var textDocument = new TextDocument(data.name);
             if (data.roomId) {
                 textDocument.roomId = data.roomId;
             }
             if (data.content) {
+                console.log('has content');
                 textDocument.content = data.content;
             }
             return textDocument;
