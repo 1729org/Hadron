@@ -9,7 +9,7 @@ import { Tools } from '../../generics/generics.tools';
 import { User } from '../../models/user';
 import { JwtHelper } from 'angular2-jwt';
 import 'rxjs/add/operator/catch';
-import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/map'; 
 
 @Injectable()
 export class AuthenticationService {

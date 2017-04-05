@@ -2,37 +2,31 @@ import { Path } from './path';
 import { PriorityQueue } from './priority-queue';
 
 export class GraphicDocument {
-	private _name :string;
-	private _content :PriorityQueue<Path>;
-	private _lastModifiedDate :Date;
+	private _content :Array<Path>;
 
-	constructor(name :string, lastModifiedDate :Date) {
-		this._name = name;
-		this._content = new PriorityQueue<Path>();
-		this._lastModifiedDate = lastModifiedDate;
+	constructor() {
+		this._content = [];
 	}
 
-	set name(name :string) {
-		this._name = name;
+	peekAtPath() :Path {
+		return this._content[this._content.length -1];
 	}
 
-	get name() :string {
-		return this._name;
+	popFromContent() {
+		if(this._content.length !== 0) {
+			this._content.pop();
+		}
 	}
 
 	pushToContent(path :Path) {
 		this._content.push(path);
 	}
 
-	get content() :PriorityQueue<Path> {
+	clearContent() {
+		this._content = [];
+	}
+
+	get content() :Array<Path> {
 		return this._content;
-	}
-
-	set lastModifiedDate(lastModifiedDate :Date) {
-		this._lastModifiedDate = lastModifiedDate;
-	}
-
-	get lastModifiedDate() :Date {
-		return this._lastModifiedDate;
 	}
 }

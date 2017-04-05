@@ -36,4 +36,4 @@ var User = (function () {
     return User;
 }());
 export { User };
-//# sourceMappingURL=C:/Old/Hadron/HadronClient/src/app/models/user.js.map
+//# sourceMappingURL=C:/Old/Hadron/HadronClient/src/app/models/User.js.map

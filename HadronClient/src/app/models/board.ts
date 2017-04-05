@@ -1,17 +1,26 @@
 import { TextDocument } from './text-document';
 import { GraphicDocument } from './graphic-document';
-import { Collaboration } from './collaboration';
 
 export class Board {
+	private _id :string;
 	private _name :string;
 	private _textDocument :TextDocument;
 	private _graphicDocument :GraphicDocument;
-	private _collaboration :Collaboration;
+	private _isShared :boolean;
 	private _ownerEmail :string;
 
-	constructor(name :string, ownerEmail :string) {
+	constructor(id: string, name :string, ownerEmail :string) {
+		this._id = id;
 		this._name = name;
 		this._ownerEmail = ownerEmail;
+	}
+
+	set id(id :string) {
+		this._id = id;
+	}
+
+	get id() :string {
+		return this._id;
 	}
 
 	set name(name :string) {
@@ -38,12 +47,12 @@ export class Board {
 		return this._graphicDocument;
 	}
 
-	set collaboration(collaboration :Collaboration) {
-		this._collaboration = collaboration;
+	set isShared(isShared :boolean) {
+		this._isShared = isShared;
 	}
 
-	get collaboration() :Collaboration {
-		return this._collaboration;
+	get isShared() :boolean {
+		return this._isShared;
 	}
 
 	set ownerEmail(ownerEmail :string) {

@@ -7,13 +7,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Component, NgZone, ViewChild } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
+import { RoomUsers } from '../models/room-users';
 import { BoardService } from '../board-zone/board/board.service';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../authentication-zone/app-authentication/authentication.service';
 import { MdDialog } from '@angular/material';
 import { BoardListDialogComponent } from './board-list-dialog/board-list-dialog.component';
 import { BoardNewDialogComponent } from './board-new-dialog/board-new-dialog.component';
+import { BoardCanvasDialogComponent } from './board-canvas-dialog/board-canvas-dialog.component';
 import { TextDocumentNewDialogComponent } from './text-document-new-dialog/text-document-new-dialog.component';
 import { BoardConstants } from '../board-zone/board/board.constants';
 import { RoadMapDialogComponent } from './road-map-dialog/road-map-dialog.component';
@@ -38,12 +40,21 @@ var BoardZoneComponent = (function () {
                 _this.clearAndLogout();
             }
         });
+        boardService.updateRoomUsers$.subscribe(function (roomUsers) {
+            console.log('room users triggered');
+            _this.zone.run(function () {
+                _this.roomUsers = roomUsers;
+            });
+        });
         if (!authenticationService.isAuthenticated()) {
+            console.log('navigating to login');
             this.router.navigateByUrl('/login');
         }
+        console.log('bp0');
         if (!boardService.hasBoard()) {
             console.log('does not have board');
             boardService.getLastModifiedBoard().subscribe(function (data) {
+                console.log('bp1', data);
                 _this.zone.run(function () {
                     _this.boardName = boardService.getCurrentBoardName();
                     console.log('here');
@@ -55,13 +66,15 @@ var BoardZoneComponent = (function () {
             this.boardName = boardService.getCurrentBoardName();
             this.textDocumentName = boardService.getCurrentTextDocumentName();
         }
+        this.roomUsers = new RoomUsers();
         this.showChangeBoardNameInput = false;
         this.showChangeTextDocumentNameInput = false;
     }
-    BoardZoneComponent.prototype.openSideNav = function () {
-        if (!this.sidenav.isOpen) {
-            this.sidenav.toggle();
-        }
+    BoardZoneComponent.prototype.whiteBoardOpen = function () {
+        this.boardService.unfocusQuillEditor();
+        this.dialog.closeAll();
+        this.dialog
+            .open(BoardCanvasDialogComponent, { width: '100vw', height: '100vh', disableClose: true });
     };
     BoardZoneComponent.prototype.setQuillEditor = function (event) {
         this.boardService.setQuillEditor(event);
@@ -69,10 +82,12 @@ var BoardZoneComponent = (function () {
     BoardZoneComponent.prototype.shareBoard = function () {
         var _this = this;
         if (this.boardService.isOwner()) {
+            this.boardService.unfocusQuillEditor();
             this.dialog.closeAll();
             this.boardService
                 .getMembers()
                 .subscribe(function (data) {
+                console.log(data.userIds);
                 _this.dialog
                     .open(BoardShareDialogComponent, { width: "55vw", data: data.userIds })
                     .afterClosed().subscribe(function (result) {
@@ -90,6 +105,7 @@ var BoardZoneComponent = (function () {
     };
     BoardZoneComponent.prototype.changeBoard = function () {
         var _this = this;
+        this.boardService.unfocusQuillEditor();
         this.dialog.closeAll();
         this.dialog
             .open(BoardListDialogComponent, { width: "55vw" })
@@ -108,6 +124,7 @@ var BoardZoneComponent = (function () {
         });
     };
     BoardZoneComponent.prototype.showRoadMap = function () {
+        this.boardService.unfocusQuillEditor();
         this.dialog.closeAll();
         this.dialog
             .open(RoadMapDialogComponent, { width: "65vw" })
@@ -117,6 +134,7 @@ var BoardZoneComponent = (function () {
     };
     BoardZoneComponent.prototype.newBoard = function () {
         var _this = this;
+        this.boardService.unfocusQuillEditor();
         this.dialog.closeAll();
         this.dialog
             .open(BoardNewDialogComponent)
@@ -135,6 +153,7 @@ var BoardZoneComponent = (function () {
     };
     BoardZoneComponent.prototype.newTextDocument = function () {
         var _this = this;
+        this.boardService.unfocusQuillEditor();
         this.dialog.closeAll();
         this.dialog
             .open(TextDocumentNewDialogComponent)
@@ -153,6 +172,7 @@ var BoardZoneComponent = (function () {
     };
     BoardZoneComponent.prototype.changeTextDocument = function () {
         var _this = this;
+        this.boardService.unfocusQuillEditor();
         this.dialog.closeAll();
         this.dialog
             .open(TextDocumentListDialogComponent, { width: "55vw" })
@@ -172,7 +192,7 @@ var BoardZoneComponent = (function () {
     };
     BoardZoneComponent.prototype.showChangeBoardName = function () {
         var _this = this;
-        if (!this.boardService.isOwner()) {
+        if (!this.boardService.isOwner() || this.boardService.isShared()) {
             return;
         }
         this.zone.run(function () {
@@ -197,7 +217,8 @@ var BoardZoneComponent = (function () {
     };
     BoardZoneComponent.prototype.changeBoardName = function () {
         var _this = this;
-        if (this.newBoardName !== this.boardName) {
+        if (this.newBoardName !== this.boardName &&
+            !this.boardService.isShared()) {
             this.boardService
                 .changeBoardName(this.newBoardName)
                 .subscribe(function (data) {
@@ -233,10 +254,6 @@ var BoardZoneComponent = (function () {
     };
     return BoardZoneComponent;
 }());
-__decorate([
-    ViewChild('sidenav'),
-    __metadata("design:type", Object)
-], BoardZoneComponent.prototype, "sidenav", void 0);
 BoardZoneComponent = __decorate([
     Component({
         selector: 'board-zone',

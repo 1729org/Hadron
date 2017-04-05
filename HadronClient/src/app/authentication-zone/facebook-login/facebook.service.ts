@@ -21,6 +21,9 @@ export class FacebookService implements OnInit {
 	login() {
         FB.login(result => { 
             FB.api(FacebookConstants.FACEBOOK_API_URL, userInfo => { 
+                if(!userInfo || !userInfo.email) {
+                    return;
+                }
                  return this.authenticationService
                 .authenticate(userInfo.email)
                 .subscribe(data => {

@@ -12,11 +12,13 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { HadronHttp } from './generics/generics.interceptor';
 import { BoardService } from './board-zone/board/board.service';
 import { BoardNewDialogComponent } from './board-zone/board-new-dialog/board-new-dialog.component';
+import { BoardCanvasDialogComponent } from './board-zone/board-canvas-dialog/board-canvas-dialog.component';
 import { BoardShareDialogComponent } from './board-zone/board-share-dialog/board-share-dialog.component';
 import { BoardListDialogComponent } from './board-zone/board-list-dialog/board-list-dialog.component';
 import { TextDocumentNewDialogComponent } from './board-zone/text-document-new-dialog/text-document-new-dialog.component';
 import { AuthenticationService } from './authentication-zone/app-authentication/authentication.service';
 import { MaterialModule } from '@angular/material';
+import { Uploader } from 'angular2-http-file-upload';
 import { RoadMapDialogComponent } from './board-zone/road-map-dialog/road-map-dialog.component';
 import { TextDocumentListDialogComponent } from './board-zone/text-document-list-dialog/text-document-list-dialog.component';
 import { QuillModule } from 'ngx-quill';
@@ -46,6 +48,7 @@ const appRoutes: Routes = [
     BoardShareDialogComponent,
     BoardNewDialogComponent,
     RoadMapDialogComponent,
+    BoardCanvasDialogComponent,
     BoardListDialogComponent,
     TextDocumentNewDialogComponent,
     TextDocumentListDialogComponent,
@@ -69,6 +72,7 @@ const appRoutes: Routes = [
     BoardShareDialogComponent,
     BoardNewDialogComponent,
     RoadMapDialogComponent,
+    BoardCanvasDialogComponent,
     BoardListDialogComponent,
     TextDocumentNewDialogComponent,
     TextDocumentListDialogComponent
@@ -77,7 +81,8 @@ const appRoutes: Routes = [
       provide: HadronHttp,
       useFactory: hadronHttpFactory,
       deps: [XHRBackend, RequestOptions]
-  }, 
+  },
+  Uploader,
   BoardService,
   AuthenticationService],
   bootstrap: [AppComponent]

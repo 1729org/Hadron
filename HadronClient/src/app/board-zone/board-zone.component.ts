@@ -1,11 +1,13 @@
-import { Component, NgZone, ViewChild } from '@angular/core';
+import { Component, NgZone, ViewChild, OnInit } from '@angular/core';
 import { Board } from '../models/board';
+import { RoomUsers } from '../models/room-users';
 import { BoardService } from '../board-zone/board/board.service';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../authentication-zone/app-authentication/authentication.service';
 import { MdDialog } from '@angular/material';
 import { BoardListDialogComponent } from './board-list-dialog/board-list-dialog.component';
 import { BoardNewDialogComponent } from './board-new-dialog/board-new-dialog.component';
+import { BoardCanvasDialogComponent } from './board-canvas-dialog/board-canvas-dialog.component';
 import { TextDocumentNewDialogComponent } from './text-document-new-dialog/text-document-new-dialog.component';
 import { BoardConstants } from '../board-zone/board/board.constants';
 import { RoadMapDialogComponent } from './road-map-dialog/road-map-dialog.component';
@@ -28,6 +30,7 @@ export class BoardZoneComponent {
    private boardName :string;
    private textDocumentName :string;
    private newBoardName :string;
+   private roomUsers :RoomUsers;
    private newTextDocumentName :string;
    private showChangeBoardNameInput :boolean;
    private showChangeTextDocumentNameInput :boolean;
@@ -36,9 +39,6 @@ export class BoardZoneComponent {
    private quillEditor :any;
    private quillModules :any = BoardConstants.QUILL_MODULES;
 
-   @ViewChild('sidenav')
-   private sidenav :any;
-   
    constructor(private boardService :BoardService, 
      private authenticationService :AuthenticationService,
      private zone: NgZone,
@@ -49,12 +49,22 @@ export class BoardZoneComponent {
          this.clearAndLogout();
        }
      });
+     boardService.updateRoomUsers$.subscribe(roomUsers => {
+       console.log('room users triggered');
+       this.zone.run(() => {
+         this.roomUsers = roomUsers
+       });
+     });
      if(!authenticationService.isAuthenticated()) {
+       console.log('navigating to login');
        this.router.navigateByUrl('/login');
      }
+
+         console.log('bp0');
      if(!boardService.hasBoard()) {
        console.log('does not have board');
        boardService.getLastModifiedBoard().subscribe(data => {
+         console.log('bp1', data);
          this.zone.run(() => {
            this.boardName = boardService.getCurrentBoardName();
             console.log('here');
@@ -65,14 +75,16 @@ export class BoardZoneComponent {
        this.boardName = boardService.getCurrentBoardName();
        this.textDocumentName = boardService.getCurrentTextDocumentName();
      }
+     this.roomUsers = new RoomUsers();
      this.showChangeBoardNameInput = false;
      this.showChangeTextDocumentNameInput = false;
    }
-
-  openSideNav() {
-    if(!this.sidenav.isOpen) {
-      this.sidenav.toggle();
-    }
+   
+  whiteBoardOpen() {
+    this.boardService.unfocusQuillEditor();
+     this.dialog.closeAll();
+     this.dialog
+     .open(BoardCanvasDialogComponent, {width: '100vw', height: '100vh', disableClose: true});
   }
 
    setQuillEditor(event) {
@@ -81,10 +93,12 @@ export class BoardZoneComponent {
 
    shareBoard() {
      if(this.boardService.isOwner()) {
+       this.boardService.unfocusQuillEditor();
        this.dialog.closeAll();
        this.boardService
        .getMembers()
        .subscribe(data => {
+         console.log(data.userIds);
           this.dialog
          .open(BoardShareDialogComponent, {width: "55vw", data: data.userIds})
          .afterClosed().subscribe(result => {
@@ -103,6 +117,7 @@ export class BoardZoneComponent {
    }
 
    changeBoard() {
+     this.boardService.unfocusQuillEditor();
      this.dialog.closeAll();
      this.dialog
      .open(BoardListDialogComponent, {width: "55vw"})
@@ -122,6 +137,7 @@ export class BoardZoneComponent {
    }
 
    showRoadMap() {
+     this.boardService.unfocusQuillEditor();
      this.dialog.closeAll();
      this.dialog
      .open(RoadMapDialogComponent, {width: "65vw"})
@@ -131,6 +147,7 @@ export class BoardZoneComponent {
    }
 
    newBoard() {
+     this.boardService.unfocusQuillEditor();
      this.dialog.closeAll();
      this.dialog
      .open(BoardNewDialogComponent)
@@ -149,6 +166,7 @@ export class BoardZoneComponent {
    }
 
    newTextDocument() {
+     this.boardService.unfocusQuillEditor();
      this.dialog.closeAll();
      this.dialog
      .open(TextDocumentNewDialogComponent)
@@ -167,6 +185,7 @@ export class BoardZoneComponent {
    }
 
    changeTextDocument() {
+     this.boardService.unfocusQuillEditor();
      this.dialog.closeAll();
      this.dialog
      .open(TextDocumentListDialogComponent, {width: "55vw"})
@@ -186,7 +205,7 @@ export class BoardZoneComponent {
    }
 
    showChangeBoardName() {
-     if(!this.boardService.isOwner()) {
+     if(!this.boardService.isOwner() || this.boardService.isShared()) {
        return;
      }
      this.zone.run(() => {
@@ -213,7 +232,8 @@ export class BoardZoneComponent {
    }
 
    changeBoardName() {
-     if(this.newBoardName !== this.boardName) {
+     if(this.newBoardName !== this.boardName &&
+        !this.boardService.isShared()) {
        this.boardService
        .changeBoardName(this.newBoardName)
        .subscribe(data => {

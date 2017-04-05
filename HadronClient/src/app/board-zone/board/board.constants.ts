@@ -15,6 +15,8 @@ export class BoardConstants {
 	public static SAVE_TEXT_DOCUMENT_URL :string = '/textDocument/save';
 	public static LIST_TEXT_DOCUMENTS_URL :string = '/textDocument/list';
 
+	public static UPLOAD_URL :string = '/singleUpload';
+
 	public static QUILL_MODULES :any = {
 	  formula: true,
 	  toolbar: [

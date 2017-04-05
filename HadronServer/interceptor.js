@@ -10,7 +10,8 @@ module.exports = function(application,
 		if (req.method == 'OPTIONS') {
 	       return res.sendStatus(genericConstants.OK);
 	    }
-		if(req.url === genericConstants.LOGIN_URL) {
+		if(req.url === genericConstants.LOGIN_URL ||
+		   req.url === genericConstants.UPLOAD_URL) {
 			return next();
 		}
 		var token = req.headers['x-auth-token'];

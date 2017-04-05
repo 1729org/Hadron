@@ -8,8 +8,11 @@ import { MdDialog, MdDialogRef } from '@angular/material';
 export class BoardShareDialogComponent {
   @ViewChild('emailInput')
   private emailInput :any;
+  private memberList :Array<string>;
   
   constructor(private boardDialogRef: MdDialogRef<BoardShareDialogComponent>) {
+  	this.memberList = boardDialogRef.config.data;
+  	console.log(this.memberList);
   }
 
   shareBoard() {

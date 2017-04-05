@@ -1,14 +1,11 @@
 import { Comparable } from './comparable';
 
-export class Path extends Comparable<Path>{
+export class Path {
 	private _colorStroke :string;
 	private _brushSize :string;
-	private _points :Array<[number, number]>;
-	private _closedTimestamp :number;
+	private _path :Array<[number, number]>;
 
 	constructor() {
-		super();
-		this._points = [];
 	}
 
 	set colorStroke(colorStroke :string) {
@@ -27,35 +24,11 @@ export class Path extends Comparable<Path>{
 		return this._brushSize;
 	}
 
-	set points(points :Array<[number, number]>) {
-		this._points = points;
+	set path(path :Array<[number, number]>) {
+		this._path = path;
 	}
 
-	set closedTimestamp(closedTimestamp :number) {
-		this._closedTimestamp = closedTimestamp;
-	}
-
-	get closedTimestamp() :number {
-		return this._closedTimestamp;
-	}
-
-	public add(point :[number, number]) {
-		this._points.push(point);
-	}
-
-	public get(index :number) :[number, number] {
-		return this._points[index];
-	}
-
-	public close() {
-		this._closedTimestamp = Date.now();
-	}
-
-	public size() :number {
-		return this._points.length;
-	}
-
-	public compareTo(path :Path) :number{
-		return this._closedTimestamp - path.closedTimestamp;
+	get path() :Array<[number, number]> {
+		return this._path;
 	}
 }

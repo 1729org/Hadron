@@ -12,6 +12,8 @@ import { MdDialogRef } from '@angular/material';
 var BoardShareDialogComponent = (function () {
     function BoardShareDialogComponent(boardDialogRef) {
         this.boardDialogRef = boardDialogRef;
+        this.memberList = boardDialogRef.config.data;
+        console.log(this.memberList);
     }
     BoardShareDialogComponent.prototype.shareBoard = function () {
         this.boardDialogRef.close(this.emailInput.nativeElement.value);

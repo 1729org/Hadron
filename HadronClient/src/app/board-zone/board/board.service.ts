@@ -1,5 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Board } from '../../models/board';
+import { Path } from '../../models/path';
+import { User } from '../../models/user';
+import { RoomUsers } from '../../models/room-users';
+import { GraphicDocument } from '../../models/graphic-document';
 import { BoardSignature} from '../../models/board-signature';
 import { AuthenticationService } from '../../authentication-zone/app-authentication/authentication.service';
 import { GenericConstants } from '../../generics/generics.constants';
@@ -8,10 +12,16 @@ import { Observable } from 'rxjs/Rx';
 import { HadronHttp } from '../../generics/generics.interceptor';
 import { Tools } from '../../generics/generics.tools';
 import { BoardConstants } from './board.constants';
+import { PriorityQueue } from '../../models/priority-queue';
+import { RemoteDelta } from '../../models/remote-delta';
 import { URLSearchParams } from '@angular/http';
+import { Uploader }      from 'angular2-http-file-upload';
+import { QuillUpload }  from '../../models/quill-upload';
 import { Subject } from 'rxjs/Subject';
 
-import * as io from 'socket.io-client';
+import * as io from 'socket.io-client'; 
+	
+declare var paper: any;
 
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/map';
@@ -21,20 +31,29 @@ export class BoardService {
 	private board :Board;
 	private quillEditor :any;
 	private quillBuffer :Array<any>;
+	private paper :any;
 	private saveTimerId :any;
-	private lastModifiedTime :number;
+	private lastModifiedTime :number; 
+	private socket :any;
+	private deltaQueue :PriorityQueue<RemoteDelta>;
 
 	private logout = new Subject<boolean>();
 	logout$ = this.logout.asObservable();
 
+	private updateRoomUsers = new Subject<RoomUsers>();
+	updateRoomUsers$ = this.updateRoomUsers.asObservable();
+
 	constructor(private hadronHttp :HadronHttp,
-		private authenticationService: AuthenticationService) {
+		private authenticationService: AuthenticationService,
+		private uploaderService: Uploader) {
+		console.log(paper);
 		hadronHttp.logout$.subscribe(logout => {
 			if(logout) {
 				this.clearAndLogout();
 				this.logout.next(true);
 			}
 	    });
+	    this.deltaQueue = new PriorityQueue<RemoteDelta>();
 	    this.quillBuffer = [];
 	}
 
@@ -42,7 +61,11 @@ export class BoardService {
 		return this.hadronHttp
         .post(`${GenericConstants.BASE_URL}${BoardConstants.CREATE_BOARD_URL}`, { name })
         .map((response :Response) => {
+        	if(this.socket && this.socket.connected) {
+        		this.socket.disconnect();
+        	}
         	this.board = Tools.mapToBoard(response.json());
+        	this.board.graphicDocument = new GraphicDocument();
 			return {};
         })
         .catch((error :Response | any) => {
@@ -59,6 +82,12 @@ export class BoardService {
          })
         .map((response :Response) => {
         	this.board.textDocument = Tools.mapToTextDocument(response.json());
+        	if(this.socket && this.socket.connected) {
+        		this.socket.disconnect();
+        	}
+        	if(this.isShared() && this.hasTextDocument()) {
+        		this.connectToServer(this.getTextDocumentRoomId());
+        	}
 			return {};
         })
         .catch((error :Response | any) => {
@@ -71,8 +100,17 @@ export class BoardService {
         .get(`${GenericConstants.BASE_URL}${BoardConstants.GET_LAST_MODIFIED_BOARD_URL}`)
         .map((response :Response) => {
         	this.board = Tools.mapToBoard(response.json());
-        	console.log(this.board.textDocument.content);
-        	this.updateQuillFromTextDocument();
+        	this.board.graphicDocument = new GraphicDocument();
+        	if(this.socket && this.socket.connected) {
+        		this.socket.disconnect();
+        	}
+        	if(!this.isShared()) {
+        		console.log('not shared');
+        		this.updateQuillFromTextDocument();
+        	}
+        	if(this.isShared() && this.hasTextDocument()) {
+        		this.connectToServer(this.getTextDocumentRoomId());
+        	}
 			return {};
         })
         .catch((error :Response | any) => {
@@ -146,8 +184,6 @@ export class BoardService {
 		}
 		this.saveTextDocumentContent()
 		.subscribe(data =>{},error=>{});
-		/*let params: URLSearchParams = new URLSearchParams();
-	    params.set('name', name);*/
 		return this.hadronHttp
         .post(`${GenericConstants.BASE_URL}${BoardConstants.GET_BOARD_BY_NAME_URL}`, {
         	ownerEmail: ownerEmail,
@@ -155,7 +191,16 @@ export class BoardService {
         })
         .map((response :Response) => {
         	this.board = Tools.mapToBoard(response.json());
-        	this.updateQuillFromTextDocument();
+        	this.board.graphicDocument = new GraphicDocument();
+        	if(this.socket && this.socket.connected) {
+        		this.socket.disconnect();
+        	}
+        	if(this.isShared() && this.hasTextDocument()) {
+        		this.connectToServer(this.getTextDocumentRoomId());
+        	}
+        	if(!this.isShared()) {
+        		this.updateQuillFromTextDocument();
+        	}
 			return {};
         })
         .catch((error :Response | any) => {
@@ -169,6 +214,18 @@ export class BoardService {
 
 	isOwner() :boolean {
 		return this.authenticationService.getClaims().email === this.board.ownerEmail;
+	}
+
+	isShared() {
+		return this.board.isShared;
+	}
+
+	hasTextDocument() :boolean {
+		return this.board.textDocument != null;	
+	}
+
+	getTextDocumentRoomId() :string {
+		return this.board.textDocument.roomId;
 	}
 
 	getOwnerEmail() {
@@ -226,7 +283,15 @@ export class BoardService {
         .map((response :Response) => {
         	let  textDocument = Tools.mapToTextDocument(response.json());
         	this.board.textDocument = textDocument;
-        	this.updateQuillFromTextDocument();
+        	if(this.socket && this.socket.connected) {
+        		this.socket.disconnect();
+        	}
+        	if(this.isShared() && this.hasTextDocument()) {
+        		this.connectToServer(this.getTextDocumentRoomId());
+        	}
+        	if(!this.isShared()) {
+        		this.updateQuillFromTextDocument();
+        	}
 			return textDocument || {};
         })
         .catch((error :Response | any) => {
@@ -242,7 +307,13 @@ export class BoardService {
 
 	setBoard(board :Board) :void{
 		this.board = board;
-		this.updateQuillFromTextDocument();
+        this.board.graphicDocument = new GraphicDocument();
+		if(!this.isShared()) {
+			console.log('not shared');
+			this.updateQuillFromTextDocument();
+		} else {
+			this.connectToServer(this.board.textDocument.roomId);
+		}
 	}
 
 	saveTextDocumentContent() {
@@ -262,28 +333,200 @@ export class BoardService {
         });
 	}
 
+	setPaper(paper :any) :void {
+		this.paper = paper;
+	}
+
+	addPath(path :any) :void {
+		if(this.board && this.board.graphicDocument) {
+			let newPath = new Path();
+			newPath.path = path;
+			this.board.graphicDocument.pushToContent(newPath);
+		}
+	}
+
+	getGraphicContent() :Array<Path> {
+		return this.board.graphicDocument.content;
+	}
+
+	uploadBlob(blob: any) {
+		let quillUpload = new QuillUpload(blob);
+    	quillUpload.formData = { email: this.authenticationService.getClaims().email, boardId: this.board.id };
+    	this.uploaderService.onSuccessUpload = (item, response, status, headers) => {
+         console.log(item);
+        };
+        this.uploaderService.onErrorUpload = (item, response, status, headers) => {
+            console.log(item);
+        };
+        this.uploaderService.onCompleteUpload = (item, response, status, headers) => {
+            console.log(item);
+        };
+    	this.uploaderService.upload(quillUpload);
+	}
+
+	clearCanvasPaths() {
+		this.board.graphicDocument.clearContent();
+	}
+
+    popCanvasPath() {
+    	this.board.graphicDocument.popFromContent();
+    }
+
+
 	setQuillEditor(quillEditor :any) :void {
+		console.log('setting quill editor');
 		this.quillEditor = quillEditor;
-		this.updateQuillFromTextDocument();
+		console.log('quill editor set');
+		this.quillEditor.disable();
+		console.log('quill editor disabled');
+		if((this.board && !this.isShared()) || ( this.board && this.isMaster())) {
+			console.log('trying to update');
+			this.updateQuillFromTextDocument();
+			console.log('should enable');
+			this.quillEditor.enable();
+		}
+		console.log('registered text change handler');
 		this.quillEditor.on('text-change', (newDelta, oldDelta, source) => {
-			console.log(newDelta);
-	  	  this.lastModifiedTime = Date.now();
- 		  if(source !== 'initial') {
-		  	if(!this.saveTimerId) {
-		  		this.saveTimerId = setInterval(() => {
-				  	if(Date.now() - this.lastModifiedTime > (BoardConstants.IDLE_INTERVAL * 1000)) {
-				  		clearInterval(this.saveTimerId);
-				  		this.saveTimerId = null;
+				console.log('text changed');
+				if(this.isShared()) {
+					if(source !== 'initial' && source !== 'remote') {
+						this.socket.emit('deltaSyncEvent', {
+							delta: newDelta,
+							timestamp: Date.parse(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}))
+						});
+					}
+				}
+				if (this.isMaster() || !this.isShared()) { 
+				  	  this.lastModifiedTime = Date.now();
+			 		  if(source !== 'initial') {
+					  	if(!this.saveTimerId) {
+					  		this.saveTimerId = setInterval(() => {
+							  	if(Date.now() - this.lastModifiedTime > (BoardConstants.IDLE_INTERVAL * 1000)) {
+							  		clearInterval(this.saveTimerId);
+							  		this.saveTimerId = null;
+							  	}
+					  			this.saveTextDocumentContent().subscribe(data=>{},error=>{});
+					  		}, BoardConstants.QUILL_SAVE_INTERVAL * 1000);
+					  	}
+					  } else {
+					  	this.quillEditor.enable();
+					  }
+				}
+				if(this.isShared() && !this.isMaster()) {
+					if(this.deltaQueue) {
+					  	for(let remoteDelta of this.deltaQueue.asArray()) {
+					  		this.quillEditor.updateContents(remoteDelta.delta, 'remote');
+					  	}
+						this.deltaQueue = null;
 				  	}
-		  			this.saveTextDocumentContent().subscribe(data=>{},error=>{});
-		  		}, BoardConstants.QUILL_SAVE_INTERVAL * 1000);
-		  	}
-		  }
+					this.quillEditor.enable();
+				}
 		});
 	}
 
 	clearAndLogout() :void{
 		this.authenticationService.logout();
 		this.board = null;
+    	if(this.socket && this.socket.connected) {
+    		this.socket.disconnect();
+    	}
 	}
+
+	unfocusQuillEditor() :void {
+		this.quillEditor.blur();
+	}
+
+	public isMaster() :boolean {
+		return this.board.textDocument.master;
+	}
+
+	public setMaster(value :boolean) {
+		this.board.textDocument.master = value;
+	}
+
+	public connectToServer(roomId :string) :void {
+		let user = this.authenticationService.getClaims();
+		this.socket = io(GenericConstants.BASE_SOCKET_URL, {
+			reconnection: true,
+			query: {
+				roomId: roomId,
+				assignedUserColor: user.assignedUserColor,
+				email: user.email
+			}
+		});
+
+		this.socket.on('connect', () => {
+			let roomUsers = new RoomUsers();
+			roomUsers.addUser(user);
+			this.board.textDocument.roomUsers = roomUsers;
+			console.log(roomUsers);
+			this.updateRoomUsers.next(roomUsers);
+		});
+
+		this.socket.on('newArrival', newArrival => {
+			this.board.textDocument.addRoomUser(new User(newArrival.email, newArrival.assignedUserColor));
+			console.log('newArrival ', newArrival.email);
+		});
+
+		this.socket.on('someoneLeft', data => {
+			let roomUsers = this.board.textDocument.roomUsers.getUsers();
+			let index = -1;
+			for(let i=0;i<roomUsers.length;i++) {
+				console.log(roomUsers[i].email);
+				if(roomUsers[i].email === data.email) {
+					index = i;
+				}
+			}
+			if(index > -1) {
+				roomUsers.splice(index,index);
+			}
+			console.log('someone left ', data.email);
+			this.updateRoomUsers.next(this.board.textDocument.roomUsers);
+		});
+
+		this.socket.on('roomiesListEvent', data => {
+			for(let i=0;i<data.roomies.length;i++) {
+				var user = new User(data.roomies[i].email, data.roomies[i].assignedUserColor);
+				this.board.textDocument.addRoomUser(user);
+			}
+			this.updateRoomUsers.next(this.board.textDocument.roomUsers);
+			console.log('roomies ', data);
+		});
+
+		this.socket.on('masterAssignEvent', () => {
+			this.setMaster(true);
+			//if it's not updated
+			console.log('length', this.quillEditor.getText().trim().length);
+			if(this.quillEditor.getText().trim().length === 0) {
+				this.updateQuillFromTextDocument();
+			}
+			this.deltaQueue = null;
+			console.log('master ', user.email);
+		});
+
+		this.socket.on('noobSyncRequestEvent', data => {
+			console.log('noobSyncRequestEvent', this.isMaster());
+			if(this.isMaster()) {
+				this.socket.emit('contentSyncEvent', {
+					socketId: data.socketId,
+					content: this.quillEditor.getContents(),
+					timestamp: Date.parse(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}))
+				});
+			}
+		});
+
+		this.socket.on('contentSyncEvent', data => {
+			console.log(data.content);
+			this.quillEditor.setContents(data.content, 'initial');
+		});
+
+		this.socket.on('deltaSyncEvent', data => {
+			if(this.deltaQueue) {
+				this.deltaQueue.push(new RemoteDelta(data.delta, data.timestamp));
+			} else {
+				this.quillEditor.updateContents(data.delta, 'remote');
+			}
+		});
+	}
+
 }

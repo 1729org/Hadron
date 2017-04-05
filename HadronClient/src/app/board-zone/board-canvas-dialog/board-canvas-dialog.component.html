@@ -1,0 +1,6 @@
+<div (window:keydown.delete)="clearCanvas()" 
+	 (window:keydown.control.z)="undo()"
+	 (window:keydown.escape)="closeCanvas()" >
+	<canvas #whiteBoard style="width:100%;height:100%;"> Canvas not supported! </canvas>
+	<canvas #clipCanvas style="display:none;"></canvas>
+</div>

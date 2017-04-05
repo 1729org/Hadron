@@ -4,7 +4,8 @@
 	 (window:keydown.shift.t)="changeTextDocument()"
 	 (window:keydown.control.q)="showRoadMap()"
 	 (window:keydown.shift.a)="openSideNav()"
-	 (window:keydown.alt.s)="shareBoard()">
+	 (window:keydown.alt.s)="shareBoard()"
+	 (window:keydown.shift.w)="whiteBoardOpen()">
 	<md-toolbar class="toolbar-size">
 		<span *ngIf="showChangeBoardNameInput == false" (click)="showChangeBoardName()">
 			{{boardName}}
@@ -14,9 +15,10 @@
 				<input #boardNameInput [(ngModel)]="newBoardName" mdInput placeholder="New name" (keydown.Enter)="changeBoardName()" (blur)="hideBoardNameInput()" (focus)="focusedBoardNameInput()">
 			</md-input-container>
 		</span>
+		<span *ngFor="let user of roomUsers.getUsers()"><md-icon mdTooltip="{{user.email}}" [mdTooltipPosition]="'below'" [style.color] ="user.assignedUserColor">account_box</md-icon></span>
 		<button md-button (click)="clearAndLogout()"><md-icon>exit_to_app</md-icon>Logout</button>
 	</md-toolbar>
-	<div class="row align-items-center">
+	<div class="row align-items-left">
 		<div class="col-11 align-items-center">
 			<span *ngIf="showChangeTextDocumentNameInput == false" (click)="showChangeTextDocumentName()">
 				{{textDocumentName}}
@@ -26,6 +28,8 @@
 					<input #textDocumentNameInput [(ngModel)]="newTextDocumentName" mdInput placeholder="New name" (keydown.Enter)="changeTextDocumentName()" (blur)="hideTextDocumentNameInput()" (focus)="focusedTextDocumentNameInput()">
 				</md-input-container>
 			</span>
+			<button md-button (click)="insertLastCrop()">Insert last crop</button>
+			<button md-button (click)="viewAllCrops()">View all crops</button>
 		</div>
 	</div>
 	<div class="row container-height">

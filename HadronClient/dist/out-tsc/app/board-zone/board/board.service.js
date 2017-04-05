@@ -8,28 +8,42 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 import { Injectable } from '@angular/core';
+import { Path } from '../../models/path';
+import { User } from '../../models/user';
+import { RoomUsers } from '../../models/room-users';
+import { GraphicDocument } from '../../models/graphic-document';
 import { AuthenticationService } from '../../authentication-zone/app-authentication/authentication.service';
 import { GenericConstants } from '../../generics/generics.constants';
 import { Observable } from 'rxjs/Rx';
 import { HadronHttp } from '../../generics/generics.interceptor';
 import { Tools } from '../../generics/generics.tools';
 import { BoardConstants } from './board.constants';
+import { PriorityQueue } from '../../models/priority-queue';
+import { RemoteDelta } from '../../models/remote-delta';
+import { Uploader } from 'angular2-http-file-upload';
+import { QuillUpload } from '../../models/quill-upload';
 import { Subject } from 'rxjs/Subject';
+import * as io from 'socket.io-client';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/map';
 var BoardService = (function () {
-    function BoardService(hadronHttp, authenticationService) {
+    function BoardService(hadronHttp, authenticationService, uploaderService) {
         var _this = this;
         this.hadronHttp = hadronHttp;
         this.authenticationService = authenticationService;
+        this.uploaderService = uploaderService;
         this.logout = new Subject();
         this.logout$ = this.logout.asObservable();
+        this.updateRoomUsers = new Subject();
+        this.updateRoomUsers$ = this.updateRoomUsers.asObservable();
+        console.log(paper);
         hadronHttp.logout$.subscribe(function (logout) {
             if (logout) {
                 _this.clearAndLogout();
                 _this.logout.next(true);
             }
         });
+        this.deltaQueue = new PriorityQueue();
         this.quillBuffer = [];
     }
     BoardService.prototype.createBoard = function (name) {
@@ -37,7 +51,11 @@ var BoardService = (function () {
         return this.hadronHttp
             .post("" + GenericConstants.BASE_URL + BoardConstants.CREATE_BOARD_URL, { name: name })
             .map(function (response) {
+            if (_this.socket && _this.socket.connected) {
+                _this.socket.disconnect();
+            }
             _this.board = Tools.mapToBoard(response.json());
+            _this.board.graphicDocument = new GraphicDocument();
             return {};
         })
             .catch(function (error) {
@@ -54,6 +72,12 @@ var BoardService = (function () {
         })
             .map(function (response) {
             _this.board.textDocument = Tools.mapToTextDocument(response.json());
+            if (_this.socket && _this.socket.connected) {
+                _this.socket.disconnect();
+            }
+            if (_this.isShared() && _this.hasTextDocument()) {
+                _this.connectToServer(_this.getTextDocumentRoomId());
+            }
             return {};
         })
             .catch(function (error) {
@@ -66,8 +90,17 @@ var BoardService = (function () {
             .get("" + GenericConstants.BASE_URL + BoardConstants.GET_LAST_MODIFIED_BOARD_URL)
             .map(function (response) {
             _this.board = Tools.mapToBoard(response.json());
-            console.log(_this.board.textDocument.content);
-            _this.updateQuillFromTextDocument();
+            _this.board.graphicDocument = new GraphicDocument();
+            if (_this.socket && _this.socket.connected) {
+                _this.socket.disconnect();
+            }
+            if (!_this.isShared()) {
+                console.log('not shared');
+                _this.updateQuillFromTextDocument();
+            }
+            if (_this.isShared() && _this.hasTextDocument()) {
+                _this.connectToServer(_this.getTextDocumentRoomId());
+            }
             return {};
         })
             .catch(function (error) {
@@ -137,8 +170,6 @@ var BoardService = (function () {
         }
         this.saveTextDocumentContent()
             .subscribe(function (data) { }, function (error) { });
-        /*let params: URLSearchParams = new URLSearchParams();
-        params.set('name', name);*/
         return this.hadronHttp
             .post("" + GenericConstants.BASE_URL + BoardConstants.GET_BOARD_BY_NAME_URL, {
             ownerEmail: ownerEmail,
@@ -146,7 +177,16 @@ var BoardService = (function () {
         })
             .map(function (response) {
             _this.board = Tools.mapToBoard(response.json());
-            _this.updateQuillFromTextDocument();
+            _this.board.graphicDocument = new GraphicDocument();
+            if (_this.socket && _this.socket.connected) {
+                _this.socket.disconnect();
+            }
+            if (_this.isShared() && _this.hasTextDocument()) {
+                _this.connectToServer(_this.getTextDocumentRoomId());
+            }
+            if (!_this.isShared()) {
+                _this.updateQuillFromTextDocument();
+            }
             return {};
         })
             .catch(function (error) {
@@ -158,6 +198,15 @@ var BoardService = (function () {
     };
     BoardService.prototype.isOwner = function () {
         return this.authenticationService.getClaims().email === this.board.ownerEmail;
+    };
+    BoardService.prototype.isShared = function () {
+        return this.board.isShared;
+    };
+    BoardService.prototype.hasTextDocument = function () {
+        return this.board.textDocument != null;
+    };
+    BoardService.prototype.getTextDocumentRoomId = function () {
+        return this.board.textDocument.roomId;
     };
     BoardService.prototype.getOwnerEmail = function () {
         return this.board.ownerEmail;
@@ -210,7 +259,15 @@ var BoardService = (function () {
             .map(function (response) {
             var textDocument = Tools.mapToTextDocument(response.json());
             _this.board.textDocument = textDocument;
-            _this.updateQuillFromTextDocument();
+            if (_this.socket && _this.socket.connected) {
+                _this.socket.disconnect();
+            }
+            if (_this.isShared() && _this.hasTextDocument()) {
+                _this.connectToServer(_this.getTextDocumentRoomId());
+            }
+            if (!_this.isShared()) {
+                _this.updateQuillFromTextDocument();
+            }
             return textDocument || {};
         })
             .catch(function (error) {
@@ -224,7 +281,14 @@ var BoardService = (function () {
     };
     BoardService.prototype.setBoard = function (board) {
         this.board = board;
-        this.updateQuillFromTextDocument();
+        this.board.graphicDocument = new GraphicDocument();
+        if (!this.isShared()) {
+            console.log('not shared');
+            this.updateQuillFromTextDocument();
+        }
+        else {
+            this.connectToServer(this.board.textDocument.roomId);
+        }
     };
     BoardService.prototype.saveTextDocumentContent = function () {
         console.log('saving');
@@ -242,36 +306,193 @@ var BoardService = (function () {
             return Observable.throw(error);
         });
     };
+    BoardService.prototype.setPaper = function (paper) {
+        this.paper = paper;
+    };
+    BoardService.prototype.addPath = function (path) {
+        if (this.board && this.board.graphicDocument) {
+            var newPath = new Path();
+            newPath.path = path;
+            this.board.graphicDocument.pushToContent(newPath);
+        }
+    };
+    BoardService.prototype.getGraphicContent = function () {
+        return this.board.graphicDocument.content;
+    };
+    BoardService.prototype.uploadBlob = function (blob) {
+        var quillUpload = new QuillUpload(blob);
+        quillUpload.formData = { email: this.authenticationService.getClaims().email, boardId: this.board.id };
+        this.uploaderService.onSuccessUpload = function (item, response, status, headers) {
+            console.log(item);
+        };
+        this.uploaderService.onErrorUpload = function (item, response, status, headers) {
+            console.log(item);
+        };
+        this.uploaderService.onCompleteUpload = function (item, response, status, headers) {
+            console.log(item);
+        };
+        this.uploaderService.upload(quillUpload);
+    };
+    BoardService.prototype.clearCanvasPaths = function () {
+        this.board.graphicDocument.clearContent();
+    };
+    BoardService.prototype.popCanvasPath = function () {
+        this.board.graphicDocument.popFromContent();
+    };
     BoardService.prototype.setQuillEditor = function (quillEditor) {
         var _this = this;
+        console.log('setting quill editor');
         this.quillEditor = quillEditor;
-        this.updateQuillFromTextDocument();
+        console.log('quill editor set');
+        this.quillEditor.disable();
+        console.log('quill editor disabled');
+        if ((this.board && !this.isShared()) || (this.board && this.isMaster())) {
+            console.log('trying to update');
+            this.updateQuillFromTextDocument();
+            console.log('should enable');
+            this.quillEditor.enable();
+        }
+        console.log('registered text change handler');
         this.quillEditor.on('text-change', function (newDelta, oldDelta, source) {
-            console.log(newDelta);
-            _this.lastModifiedTime = Date.now();
-            if (source !== 'initial') {
-                if (!_this.saveTimerId) {
-                    _this.saveTimerId = setInterval(function () {
-                        if (Date.now() - _this.lastModifiedTime > (BoardConstants.IDLE_INTERVAL * 1000)) {
-                            clearInterval(_this.saveTimerId);
-                            _this.saveTimerId = null;
-                        }
-                        _this.saveTextDocumentContent().subscribe(function (data) { }, function (error) { });
-                    }, BoardConstants.QUILL_SAVE_INTERVAL * 1000);
+            console.log('text changed');
+            if (_this.isShared()) {
+                if (source !== 'initial' && source !== 'remote') {
+                    _this.socket.emit('deltaSyncEvent', {
+                        delta: newDelta,
+                        timestamp: Date.parse(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }))
+                    });
                 }
+            }
+            if (_this.isMaster() || !_this.isShared()) {
+                _this.lastModifiedTime = Date.now();
+                if (source !== 'initial') {
+                    if (!_this.saveTimerId) {
+                        _this.saveTimerId = setInterval(function () {
+                            if (Date.now() - _this.lastModifiedTime > (BoardConstants.IDLE_INTERVAL * 1000)) {
+                                clearInterval(_this.saveTimerId);
+                                _this.saveTimerId = null;
+                            }
+                            _this.saveTextDocumentContent().subscribe(function (data) { }, function (error) { });
+                        }, BoardConstants.QUILL_SAVE_INTERVAL * 1000);
+                    }
+                }
+                else {
+                    _this.quillEditor.enable();
+                }
+            }
+            if (_this.isShared() && !_this.isMaster()) {
+                if (_this.deltaQueue) {
+                    for (var _i = 0, _a = _this.deltaQueue.asArray(); _i < _a.length; _i++) {
+                        var remoteDelta = _a[_i];
+                        _this.quillEditor.updateContents(remoteDelta.delta, 'remote');
+                    }
+                    _this.deltaQueue = null;
+                }
+                _this.quillEditor.enable();
             }
         });
     };
     BoardService.prototype.clearAndLogout = function () {
         this.authenticationService.logout();
         this.board = null;
+        if (this.socket && this.socket.connected) {
+            this.socket.disconnect();
+        }
+    };
+    BoardService.prototype.unfocusQuillEditor = function () {
+        this.quillEditor.blur();
+    };
+    BoardService.prototype.isMaster = function () {
+        return this.board.textDocument.master;
+    };
+    BoardService.prototype.setMaster = function (value) {
+        this.board.textDocument.master = value;
+    };
+    BoardService.prototype.connectToServer = function (roomId) {
+        var _this = this;
+        var user = this.authenticationService.getClaims();
+        this.socket = io(GenericConstants.BASE_SOCKET_URL, {
+            reconnection: true,
+            query: {
+                roomId: roomId,
+                assignedUserColor: user.assignedUserColor,
+                email: user.email
+            }
+        });
+        this.socket.on('connect', function () {
+            var roomUsers = new RoomUsers();
+            roomUsers.addUser(user);
+            _this.board.textDocument.roomUsers = roomUsers;
+            console.log(roomUsers);
+            _this.updateRoomUsers.next(roomUsers);
+        });
+        this.socket.on('newArrival', function (newArrival) {
+            _this.board.textDocument.addRoomUser(new User(newArrival.email, newArrival.assignedUserColor));
+            console.log('newArrival ', newArrival.email);
+        });
+        this.socket.on('someoneLeft', function (data) {
+            var roomUsers = _this.board.textDocument.roomUsers.getUsers();
+            var index = -1;
+            for (var i = 0; i < roomUsers.length; i++) {
+                console.log(roomUsers[i].email);
+                if (roomUsers[i].email === data.email) {
+                    index = i;
+                }
+            }
+            if (index > -1) {
+                roomUsers.splice(index, index);
+            }
+            console.log('someone left ', data.email);
+            _this.updateRoomUsers.next(_this.board.textDocument.roomUsers);
+        });
+        this.socket.on('roomiesListEvent', function (data) {
+            for (var i = 0; i < data.roomies.length; i++) {
+                var user = new User(data.roomies[i].email, data.roomies[i].assignedUserColor);
+                _this.board.textDocument.addRoomUser(user);
+            }
+            _this.updateRoomUsers.next(_this.board.textDocument.roomUsers);
+            console.log('roomies ', data);
+        });
+        this.socket.on('masterAssignEvent', function () {
+            _this.setMaster(true);
+            //if it's not updated
+            console.log('length', _this.quillEditor.getText().trim().length);
+            if (_this.quillEditor.getText().trim().length === 0) {
+                _this.updateQuillFromTextDocument();
+            }
+            _this.deltaQueue = null;
+            console.log('master ', user.email);
+        });
+        this.socket.on('noobSyncRequestEvent', function (data) {
+            console.log('noobSyncRequestEvent', _this.isMaster());
+            if (_this.isMaster()) {
+                _this.socket.emit('contentSyncEvent', {
+                    socketId: data.socketId,
+                    content: _this.quillEditor.getContents(),
+                    timestamp: Date.parse(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }))
+                });
+            }
+        });
+        this.socket.on('contentSyncEvent', function (data) {
+            console.log(data.content);
+            _this.quillEditor.setContents(data.content, 'initial');
+        });
+        this.socket.on('deltaSyncEvent', function (data) {
+            if (_this.deltaQueue) {
+                _this.deltaQueue.push(new RemoteDelta(data.delta, data.timestamp));
+            }
+            else {
+                _this.quillEditor.updateContents(data.delta, 'remote');
+            }
+        });
     };
     return BoardService;
 }());
 BoardService = __decorate([
     Injectable(),
     __metadata("design:paramtypes", [HadronHttp,
-        AuthenticationService])
+        AuthenticationService,
+        Uploader])
 ], BoardService);
 export { BoardService };
 //# sourceMappingURL=C:/Old/Hadron/HadronClient/src/app/board-zone/board/board.service.js.map

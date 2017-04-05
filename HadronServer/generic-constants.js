@@ -22,6 +22,9 @@ module.exports = function () {
 		GET_TEXT_DOCUMENT_LIST_URL: '/textDocument/list',
 		CREATE_TEXT_DOCUMENT_URL: '/textDocument/create',
 
+		UPLOAD_URL: '/singleUpload',
+		UPLOAD_DIR_BASE: 'C://Uploads/',
+
 		INVALID_TOKEN: new Error('INVALID_TOKEN'),
 		UNKNOWN_USER: new Error('UNKNOWN_USER'),
 		INCOMPLETE_DATA: new Error('INCOMPLETE_DATA'),

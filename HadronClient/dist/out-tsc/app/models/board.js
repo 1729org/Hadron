@@ -1,8 +1,19 @@
 var Board = (function () {
-    function Board(name, ownerEmail) {
+    function Board(id, name, ownerEmail) {
+        this._id = id;
         this._name = name;
         this._ownerEmail = ownerEmail;
     }
+    Object.defineProperty(Board.prototype, "id", {
+        get: function () {
+            return this._id;
+        },
+        set: function (id) {
+            this._id = id;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(Board.prototype, "name", {
         get: function () {
             return this._name;
@@ -33,12 +44,12 @@ var Board = (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Board.prototype, "collaboration", {
+    Object.defineProperty(Board.prototype, "isShared", {
         get: function () {
-            return this._collaboration;
+            return this._isShared;
         },
-        set: function (collaboration) {
-            this._collaboration = collaboration;
+        set: function (isShared) {
+            this._isShared = isShared;
         },
         enumerable: true,
         configurable: true

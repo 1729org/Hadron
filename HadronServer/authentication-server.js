@@ -1,7 +1,36 @@
 module.exports = function(db, application, genericConstants, tokenHandler) {
 	var hadronUsersCollection = db.collection('hadronUsers');
+  var multer  = require('multer')
 	var ObjectId = require('mongodb').ObjectID;
 	var uuidV4 = require('uuid/v4');
+  var fs = require('fs');
+
+  var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      console.log('in destination');
+      var data = req.body;
+      console.log('data', data, data.email);
+      fs.existsSync(genericConstants.UPLOAD_DIR_BASE + data.email) || fs.mkdirSync(genericConstants.UPLOAD_DIR_BASE + data.email);
+
+      fs.existsSync(genericConstants.UPLOAD_DIR_BASE + data.email + '/' + data.boardId) || fs.mkdirSync(genericConstants.UPLOAD_DIR_BASE + data.email + '/' + data.boardId);
+      cb(null, genericConstants.UPLOAD_DIR_BASE + data.email + '/' + data.boardId + '/');
+    },
+    filename: function (req, file, cb) {
+      console.log('in filename');
+      var data = req.body;
+      var now = Date.now();
+      var fileName = uuidV4() + '_' + now;
+      var fileDoc = {
+        name: fileName,
+        uploadedDate: now,
+        size: file.size
+      };
+      db.eval('function(email, fileDoc){ var document = db.hadronUsers.findOne({email:email}); if(document == null) return; document.files.push(fileDoc); db.hadronUsers.save(document);}', [data.email, fileDoc]);
+      cb(null, fileName + '.png');
+    }
+  });
+
+  var upload = multer({ storage: storage });
 
 	function getRandomColor() {
 	    var letters = '0123456789ABCDEF';
@@ -11,6 +40,13 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
 	    }
 	    return color;
 	}
+
+  application.post(genericConstants.UPLOAD_URL, upload.any(), function (req, res, next) {
+    console.log(req.file);
+    console.log(req.body);
+    console.log('in upload handler');
+    res.status(200).json({name: req.files[0].filename});
+  });
 
 	application.get(genericConstants.LOGIN_URL, function(req, res) {
 		var buffer = new Buffer(req.headers['authorization'], 'Base64');
@@ -26,6 +62,7 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
 					settings: {
 						assignedUserColor: randomColor
 					},
+          files: [],
           roadMap: {
             clusters: [],
             nodes: [],
@@ -36,15 +73,16 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
 				res.writeHead(401, {'x-auth-token' : tokenHandler.generateToken({email: email, assignedUserColor: randomColor}) } );
 				res.end();
 			} else {
-  				db.eval('function(email){  var document = db.hadronUsers.findOne({email: email}, {lastVisited: 1}); if(!document.lastVisited) {return null;} var lastVisited = db.hadronUsers.findOne({ $or: [{email: email, \'boards.name\': document.lastVisited.name}, {\'boards.shared.userIds\':{ $in : [email]}, \'boards.name\': document.lastVisited.name}] }); for(var k=0;k<lastVisited.boards.length;k++) { if(lastVisited.boards[k].name === document.lastVisited.name) { var board = lastVisited.boards[k]; for(var i=0; i< board.textDocuments.length;i++) { if(board.lastVisited.name == board.textDocuments[i].name) {board.textDocument = board.textDocuments[i]; board.ownerEmail = board.lastVisited.email; delete board.textDocuments; delete board.lastVisited; delete board.shared; return board;}}}} return null;}', [email])
+  				db.eval('function(email){  var document = db.hadronUsers.findOne({email: email}, {lastVisited: 1, settings: 1}); if(!document.lastVisited) {return null;} var lastVisited = db.hadronUsers.findOne({ $or: [{email: email, \'boards.name\': document.lastVisited.name}, {\'boards.shared.userIds\':{ $in : [email]}, \'boards.name\': document.lastVisited.name}] }); for(var k=0;k<lastVisited.boards.length;k++) { if(lastVisited.boards[k].name === document.lastVisited.name) { var board = lastVisited.boards[k]; for(var i=0; i< board.textDocuments.length;i++) { if(board.lastVisited.name == board.textDocuments[i].name) {board.textDocument = board.textDocuments[i]; board.ownerEmail = board.lastVisited.email; delete board.textDocuments; delete board.lastVisited; return { board: board, assignedUserColor: document.settings.assignedUserColor};}}}} return null;}', [email])
 				.then(function(response) {
 					if(!response) {
 						res.writeHead(401, {'x-auth-token' : tokenHandler.generateToken({email: email, assignedUserColor: randomColor}) } );
 						return res.end();
 					}
-					res.setHeader('x-auth-token', tokenHandler.generateToken({email: email, assignedUserColor: randomColor}));
+          console.log(response.assignedUserColor);
+					res.setHeader('x-auth-token', tokenHandler.generateToken({email: email, assignedUserColor: response.assignedUserColor}));
 					res.setHeader('Content-Type', 'application/json');
-					res.json(response);
+					res.json(response.board);
 				})
 				.catch(function(err){
 					res.status(500).json({message: err.message});
@@ -101,11 +139,17 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
       var data = req.body;
       var email = req.email;
       var boardName = data.boardName;
-
+      console.log(email, boardName);
       hadronUsersCollection
-      .findOne({email: email, 'boards.name': boardName}, {fields:{'boards.shared':1}})
+      .findOne({email: email})
       .then(function(document) {
-        return res.status(200).json(document.boards[0].shared);
+        for(var i=0;i<document.boards.length;i++) {
+          var board = document.boards[i];
+          if(board.name === boardName) {
+           return res.status(200).json(board.shared);
+          }
+        }
+        return res.status(401).json({});
       })
       .catch(function(err) {
         return res.status(500).json({message: err.message});
@@ -159,7 +203,7 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
   		var ownerEmail = data.ownerEmail;
   		var boardName = data.boardName;
 
-  		db.eval('function(email, ownerEmail, boardName){var document = db.hadronUsers.findOne({email: ownerEmail}); var me = db.hadronUsers.findOne({email: email}); if(!document) {return null;} for(var i=0;i<document.boards.length;i++){ if(document.boards[i].name === boardName) { me.lastVisited.name = boardName; me.lastVisited.email = ownerEmail; db.hadronUsers.save(me); var board = document.boards[i]; board.ownerEmail = ownerEmail; document.board = board; delete document.boards; delete document.board.shared; for(var j=0;j<board.textDocuments.length;j++){if(board.textDocuments[j].name = board.lastVisited.name){board.textDocument=board.textDocuments[j]; delete board.textDocuments; delete board.lastVisited; return board;}}}} return null;}',[email, ownerEmail, boardName])
+  		db.eval('function(email, ownerEmail, boardName){var document = db.hadronUsers.findOne({email: ownerEmail}); var me = db.hadronUsers.findOne({email: email}); if(!document) {return null;} for(var i=0;i<document.boards.length;i++){ if(document.boards[i].name === boardName) { me.lastVisited.name = boardName; me.lastVisited.email = ownerEmail; db.hadronUsers.save(me); var board = document.boards[i]; board.ownerEmail = ownerEmail; document.board = board; delete document.boards; for(var j=0;j<board.textDocuments.length;j++){if(board.textDocuments[j].name = board.lastVisited.name){board.textDocument=board.textDocuments[j]; delete board.textDocuments; delete board.lastVisited; return board;}}}} return null;}',[email, ownerEmail, boardName])
   		.then(function(response) {
   			if(response == null) {
   				return res.status(401).json({});
@@ -229,6 +273,7 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
 			}
 			var textDocumentName = 'change_title_' + uuidV4();
 			var board = {
+          id: uuidV4() + '_' + Date.now(),
 	  			name: name,
 	  			textDocuments:[{
 	  				name: textDocumentName
@@ -271,7 +316,7 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
   	application.get(genericConstants.GET_LAST_MODIFIED_BOARD_URL, function(req, res) {
   		var data = req.body;
   		var email = req.email;
-  		db.eval('function(email){  var document = db.hadronUsers.findOne({email: email}, {lastVisited: 1}); if(!document.lastVisited) {return null;} var lastVisited = db.hadronUsers.findOne({ $or: [{email: email, \'boards.name\': document.lastVisited.name}, {\'boards.shared.userIds\':{ $in : [email]}, \'boards.name\': document.lastVisited.name}] }); for(var k=0;k<lastVisited.boards.length;k++) { if(lastVisited.boards[k].name === document.lastVisited.name) { var board = lastVisited.boards[k]; for(var i=0; i< board.textDocuments.length;i++) { if(board.lastVisited.name == board.textDocuments[i].name) {board.textDocument = board.textDocuments[i]; board.ownerEmail = board.lastVisited.email; delete board.textDocuments; delete board.lastVisited; delete board.shared; return board;}}}} return null;}', [email])
+  		db.eval('function(email){  var document = db.hadronUsers.findOne({email: email}, {lastVisited: 1}); if(!document.lastVisited) {return null;} var lastVisited = db.hadronUsers.findOne({ $or: [{email: email, \'boards.name\': document.lastVisited.name}, {\'boards.shared.userIds\':{ $in : [email]}, \'boards.name\': document.lastVisited.name}] }); for(var k=0;k<lastVisited.boards.length;k++) { if(lastVisited.boards[k].name === document.lastVisited.name) { var board = lastVisited.boards[k]; for(var i=0; i< board.textDocuments.length;i++) { if(board.lastVisited.name == board.textDocuments[i].name) {board.textDocument = board.textDocuments[i]; board.ownerEmail = board.lastVisited.email; delete board.textDocuments; delete board.lastVisited; return board;}}}} return null;}', [email])
 		.then(function(response) {
 			if(!response) {
 				res.status(401).json({});

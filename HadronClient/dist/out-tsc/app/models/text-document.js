@@ -32,6 +32,29 @@ var TextDocument = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(TextDocument.prototype, "master", {
+        get: function () {
+            return this._master;
+        },
+        set: function (master) {
+            this._master = master;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TextDocument.prototype, "roomUsers", {
+        get: function () {
+            return this._roomUsers;
+        },
+        set: function (roomUsers) {
+            this._roomUsers = roomUsers;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    TextDocument.prototype.addRoomUser = function (user) {
+        this._roomUsers.addUser(user);
+    };
     return TextDocument;
 }());
 export { TextDocument };

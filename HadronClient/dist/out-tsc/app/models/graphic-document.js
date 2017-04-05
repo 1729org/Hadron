@@ -1,36 +1,24 @@
-import { PriorityQueue } from './priority-queue';
 var GraphicDocument = (function () {
-    function GraphicDocument(name, lastModifiedDate) {
-        this._name = name;
-        this._content = new PriorityQueue();
-        this._lastModifiedDate = lastModifiedDate;
+    function GraphicDocument() {
+        this._content = [];
     }
-    Object.defineProperty(GraphicDocument.prototype, "name", {
-        get: function () {
-            return this._name;
-        },
-        set: function (name) {
-            this._name = name;
-        },
-        enumerable: true,
-        configurable: true
-    });
+    GraphicDocument.prototype.peekAtPath = function () {
+        return this._content[this._content.length - 1];
+    };
+    GraphicDocument.prototype.popFromContent = function () {
+        if (this._content.length !== 0) {
+            this._content.pop();
+        }
+    };
     GraphicDocument.prototype.pushToContent = function (path) {
         this._content.push(path);
+    };
+    GraphicDocument.prototype.clearContent = function () {
+        this._content = [];
     };
     Object.defineProperty(GraphicDocument.prototype, "content", {
         get: function () {
             return this._content;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(GraphicDocument.prototype, "lastModifiedDate", {
-        get: function () {
-            return this._lastModifiedDate;
-        },
-        set: function (lastModifiedDate) {
-            this._lastModifiedDate = lastModifiedDate;
         },
         enumerable: true,
         configurable: true

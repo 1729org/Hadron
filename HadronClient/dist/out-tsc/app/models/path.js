@@ -1,15 +1,5 @@
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-import { Comparable } from './comparable';
-var Path = (function (_super) {
-    __extends(Path, _super);
+var Path = (function () {
     function Path() {
-        var _this = _super.call(this) || this;
-        _this._points = [];
-        return _this;
     }
     Object.defineProperty(Path.prototype, "colorStroke", {
         get: function () {
@@ -31,39 +21,17 @@ var Path = (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Path.prototype, "points", {
-        set: function (points) {
-            this._points = points;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Path.prototype, "closedTimestamp", {
+    Object.defineProperty(Path.prototype, "path", {
         get: function () {
-            return this._closedTimestamp;
+            return this._path;
         },
-        set: function (closedTimestamp) {
-            this._closedTimestamp = closedTimestamp;
+        set: function (path) {
+            this._path = path;
         },
         enumerable: true,
         configurable: true
     });
-    Path.prototype.add = function (point) {
-        this._points.push(point);
-    };
-    Path.prototype.get = function (index) {
-        return this._points[index];
-    };
-    Path.prototype.close = function () {
-        this._closedTimestamp = Date.now();
-    };
-    Path.prototype.size = function () {
-        return this._points.length;
-    };
-    Path.prototype.compareTo = function (path) {
-        return this._closedTimestamp - path.closedTimestamp;
-    };
     return Path;
-}(Comparable));
+}());
 export { Path };
 //# sourceMappingURL=C:/Old/Hadron/HadronClient/src/app/models/path.js.map

@@ -22,6 +22,9 @@ var FacebookService = (function () {
         var _this = this;
         FB.login(function (result) {
             FB.api(FacebookConstants.FACEBOOK_API_URL, function (userInfo) {
+                if (!userInfo || !userInfo.email) {
+                    return;
+                }
                 return _this.authenticationService
                     .authenticate(userInfo.email)
                     .subscribe(function (data) {
