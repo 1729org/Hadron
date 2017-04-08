@@ -24,6 +24,8 @@ module.exports = function () {
 
 		UPLOAD_URL: '/singleUpload',
 		UPLOAD_DIR_BASE: 'C://Uploads/',
+		GET_FILES_FOR_USER_URL: '/files/user',
+		GET_FILES_FOR_BOARD_URL: '/files/board',
 
 		INVALID_TOKEN: new Error('INVALID_TOKEN'),
 		UNKNOWN_USER: new Error('UNKNOWN_USER'),

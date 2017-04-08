@@ -309,10 +309,11 @@ var BoardService = (function () {
     BoardService.prototype.setPaper = function (paper) {
         this.paper = paper;
     };
-    BoardService.prototype.addPath = function (path) {
+    BoardService.prototype.addPath = function (path, color) {
         if (this.board && this.board.graphicDocument) {
             var newPath = new Path();
             newPath.path = path;
+            newPath.colorStroke = color;
             this.board.graphicDocument.pushToContent(newPath);
         }
     };
@@ -320,18 +321,54 @@ var BoardService = (function () {
         return this.board.graphicDocument.content;
     };
     BoardService.prototype.uploadBlob = function (blob) {
+        var _this = this;
         var quillUpload = new QuillUpload(blob);
-        quillUpload.formData = { email: this.authenticationService.getClaims().email, boardId: this.board.id };
+        quillUpload.formData = { email: this.board.ownerEmail, boardId: this.board.id };
         this.uploaderService.onSuccessUpload = function (item, response, status, headers) {
-            console.log(item);
+            _this.lastUploadedFileName = response.name;
         };
         this.uploaderService.onErrorUpload = function (item, response, status, headers) {
-            console.log(item);
+            console.log('error', item);
         };
         this.uploaderService.onCompleteUpload = function (item, response, status, headers) {
-            console.log(item);
+            _this.lastUploadedFileName = response.name;
         };
         this.uploaderService.upload(quillUpload);
+    };
+    BoardService.prototype.insertLastUploadedFile = function () {
+        if (this.lastUploadedFileName) {
+            this.quillEditor.insertEmbed(this.quillEditor.getText().length, 'image', "" + GenericConstants.BASE_FILE_URL + this.lastUploadedFileName);
+        }
+    };
+    BoardService.prototype.insertFromGallery = function (url) {
+        this.quillEditor.insertEmbed(this.quillEditor.getText().length, 'image', url);
+    };
+    BoardService.prototype.getFilesForUser = function () {
+        if (this.isOwner()) {
+            return this.hadronHttp
+                .get("" + GenericConstants.BASE_URL + BoardConstants.GET_FILES_FOR_USER_URL)
+                .map(function (response) {
+                console.log(response.json());
+                console.log(Tools.mapToFileArray(response.json()));
+                return Tools.mapToFileArray(response.json());
+            })
+                .catch(function (error) {
+                return Observable.throw(error);
+            });
+        }
+        else {
+            return this.hadronHttp
+                .post("" + GenericConstants.BASE_URL + BoardConstants.GET_FILES_FOR_BOARD_URL, {
+                ownerEmail: this.board.ownerEmail,
+                boardId: this.board.id
+            })
+                .map(function (response) {
+                return Tools.mapToFileArray(response.json());
+            })
+                .catch(function (error) {
+                return Observable.throw(error);
+            });
+        }
     };
     BoardService.prototype.clearCanvasPaths = function () {
         this.board.graphicDocument.clearContent();

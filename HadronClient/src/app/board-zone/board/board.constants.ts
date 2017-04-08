@@ -16,7 +16,9 @@ export class BoardConstants {
 	public static LIST_TEXT_DOCUMENTS_URL :string = '/textDocument/list';
 
 	public static UPLOAD_URL :string = '/singleUpload';
-
+	public static GET_FILES_FOR_USER_URL :string = '/files/user';
+	public static GET_FILES_FOR_BOARD_URL :string = '/files/board';
+	
 	public static QUILL_MODULES :any = {
 	  formula: true,
 	  toolbar: [

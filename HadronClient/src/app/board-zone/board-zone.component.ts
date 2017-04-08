@@ -13,6 +13,8 @@ import { BoardConstants } from '../board-zone/board/board.constants';
 import { RoadMapDialogComponent } from './road-map-dialog/road-map-dialog.component';
 import { TextDocumentListDialogComponent } from './text-document-list-dialog/text-document-list-dialog.component';
 import { BoardShareDialogComponent } from './board-share-dialog/board-share-dialog.component';
+import { BoardFileGalleryComponent } from './board-file-gallery/board-file-gallery.component';
+
 import * as Quill from 'quill';
 
 const Parchment = Quill.import('parchment');
@@ -85,6 +87,17 @@ export class BoardZoneComponent {
      this.dialog.closeAll();
      this.dialog
      .open(BoardCanvasDialogComponent, {width: '100vw', height: '100vh', disableClose: true});
+  }
+
+  insertLastUploadedFile() {
+    this.boardService.insertLastUploadedFile();
+  }
+
+  openFileGallery() {
+    this.boardService.unfocusQuillEditor();
+     this.dialog.closeAll();
+     this.dialog
+     .open(BoardFileGalleryComponent, {width: '100vw', height: '100vh'});
   }
 
    setQuillEditor(event) {

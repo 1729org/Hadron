@@ -28,8 +28,8 @@
 					<input #textDocumentNameInput [(ngModel)]="newTextDocumentName" mdInput placeholder="New name" (keydown.Enter)="changeTextDocumentName()" (blur)="hideTextDocumentNameInput()" (focus)="focusedTextDocumentNameInput()">
 				</md-input-container>
 			</span>
-			<button md-button (click)="insertLastCrop()">Insert last crop</button>
-			<button md-button (click)="viewAllCrops()">View all crops</button>
+			<button md-button (click)="insertLastUploadedFile()">Insert last crop</button>
+			<button md-button (click)="openFileGallery()">View all crops</button>
 		</div>
 	</div>
 	<div class="row container-height">

@@ -4,9 +4,28 @@ import { Path } from '../models/path';
 import { GraphicDocument } from '../models/graphic-document';
 import { Board } from '../models/board';
 import { BoardSignature} from '../models/board-signature';
-
+import { CanvasFile } from '../models/canvas-file';
 
 export class Tools {
+	public static mapToFileArray(data :Array<any>) :Array<File> {
+		if(!data) {
+			console.log('returns empty');
+			return [];
+		}
+		let files = [];
+		for(let file of data) {
+			console.log(file);
+			let canvasFile = new CanvasFile();
+			canvasFile.name = file.name;
+			canvasFile.size = file.size;
+			canvasFile.uploadedDate = file.uploadedDate;
+			canvasFile.buildUrl();
+			console.log(canvasFile);
+			files.push(canvasFile);
+		}
+		return files;
+	}
+
 	public static mapToBoardList(data :Array<any>) :Array<BoardSignature> {
 
 		if(!data) {

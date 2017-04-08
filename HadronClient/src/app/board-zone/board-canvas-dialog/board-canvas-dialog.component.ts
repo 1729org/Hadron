@@ -1,7 +1,8 @@
 import { Component, ViewChild, OnInit, EventEmitter, HostListener} from '@angular/core';
 import { MdDialog, MdDialogRef } from '@angular/material';
 import { BoardService } from '../board/board.service';
-import { Uploader }      from 'angular2-http-file-upload';
+import { Uploader } from 'angular2-http-file-upload';
+import { ColorPickerService } from 'angular2-color-picker';
 import { QuillUpload }  from '../../models/quill-upload';
 
 declare var paper: any;
@@ -25,10 +26,12 @@ export class BoardCanvasDialogComponent implements OnInit {
   private scope :any;
   private meter :any;
   private blob :any;
+  private color: string = "#127bdc";
   private pathStack: Array<any>;
   
   constructor(private boardDialogRef: MdDialogRef<BoardCanvasDialogComponent>,
-    private boardService : BoardService) {
+    private boardService : BoardService,
+    private cpService: ColorPickerService) {
     this.ctrlDown = false;
     this.leftMouseDown = false;
     this.pathStack = [];
@@ -65,26 +68,37 @@ export class BoardCanvasDialogComponent implements OnInit {
        let paths = this.boardService.getGraphicContent();
        console.log(paths);
        for(let path of paths) {
-          this.pathStack.push(new this.scope.Path({
+          let canvasPath = new this.scope.Path({
               segments: path.path,
-              strokeColor: 'black',
+              strokeColor: path.colorStroke,
               fullySelected: false
-          }).simplify(2));
-       }   
+          });
+          canvasPath.simplify(2);
+          this.pathStack.push(canvasPath);
+       }
       }
    } 
 
   @HostListener('document:mouseup', ['$event'])
   onMouseup(event: MouseEvent) {
+    if(!this.canvas.nativeElement.contains(event.target)) {
+      return;
+    }
     if(!this.ctrlDown && !this.meter) {
       if(this.leftMouseDown && this.currentPath) {
+        if(this.currentPath.segments.length === 1) {
+          this.currentPath.remove();
+          this.currentPath = null;
+          return;
+        }
         this.currentPath.simplify(2);
         this.pathStack.push(this.currentPath);
         let currentSegments = [];
         for(let segment of this.currentPath.segments) {
           currentSegments.push([segment.point.x, segment.point.y]);
         }
-        this.boardService.addPath(currentSegments);
+
+        this.boardService.addPath(currentSegments, this.currentPath.strokeColor);
         this.currentPath = null; 
       }   
     } else {
@@ -137,10 +151,15 @@ export class BoardCanvasDialogComponent implements OnInit {
 
   @HostListener('document:mousemove', ['$event'])
   onMousemove(event: MouseEvent) { 
+    if(!this.canvas.nativeElement.contains(event.target)) {
+      return;
+    }
     let mousePos = this.getMousePos(event);
     if(this.leftMouseDown) {
       if(!this.ctrlDown) {
-        this.currentPath.add(mousePos);
+        if(this.currentPath) {
+          this.currentPath.add(mousePos);
+        }
       } else {
         if(this.clipRectangleStart) {
           if(this.meter) {
@@ -159,6 +178,9 @@ export class BoardCanvasDialogComponent implements OnInit {
 
   @HostListener('document:mousedown', ['$event'])
   onMousedown(event: MouseEvent) {
+    if(!this.canvas.nativeElement.contains(event.target)) {
+      return;
+    }
     this.leftMouseDown = true;
     let mousePos = this.getMousePos(event);
     if(this.ctrlDown) {
@@ -166,7 +188,7 @@ export class BoardCanvasDialogComponent implements OnInit {
     } else {
       this.currentPath = new this.scope.Path({
           segments: [mousePos],
-          strokeColor: 'black',
+          strokeColor: this.color,
           fullySelected: false
       });
     }

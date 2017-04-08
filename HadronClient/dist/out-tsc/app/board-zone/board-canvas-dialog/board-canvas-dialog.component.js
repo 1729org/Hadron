@@ -10,10 +10,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 import { Component, ViewChild, HostListener } from '@angular/core';
 import { MdDialogRef } from '@angular/material';
 import { BoardService } from '../board/board.service';
+import { ColorPickerService } from 'angular2-color-picker';
 var BoardCanvasDialogComponent = (function () {
-    function BoardCanvasDialogComponent(boardDialogRef, boardService) {
+    function BoardCanvasDialogComponent(boardDialogRef, boardService, cpService) {
         this.boardDialogRef = boardDialogRef;
         this.boardService = boardService;
+        this.cpService = cpService;
+        this.color = "#127bdc";
         this.ctrlDown = false;
         this.leftMouseDown = false;
         this.pathStack = [];
@@ -48,18 +51,28 @@ var BoardCanvasDialogComponent = (function () {
             console.log(paths);
             for (var _i = 0, paths_1 = paths; _i < paths_1.length; _i++) {
                 var path = paths_1[_i];
-                this.pathStack.push(new this.scope.Path({
+                var canvasPath = new this.scope.Path({
                     segments: path.path,
-                    strokeColor: 'black',
+                    strokeColor: path.colorStroke,
                     fullySelected: false
-                }).simplify(2));
+                });
+                canvasPath.simplify(2);
+                this.pathStack.push(canvasPath);
             }
         }
     };
     BoardCanvasDialogComponent.prototype.onMouseup = function (event) {
         var _this = this;
+        if (!this.canvas.nativeElement.contains(event.target)) {
+            return;
+        }
         if (!this.ctrlDown && !this.meter) {
             if (this.leftMouseDown && this.currentPath) {
+                if (this.currentPath.segments.length === 1) {
+                    this.currentPath.remove();
+                    this.currentPath = null;
+                    return;
+                }
                 this.currentPath.simplify(2);
                 this.pathStack.push(this.currentPath);
                 var currentSegments = [];
@@ -67,7 +80,7 @@ var BoardCanvasDialogComponent = (function () {
                     var segment = _a[_i];
                     currentSegments.push([segment.point.x, segment.point.y]);
                 }
-                this.boardService.addPath(currentSegments);
+                this.boardService.addPath(currentSegments, this.currentPath.strokeColor);
                 this.currentPath = null;
             }
         }
@@ -110,10 +123,15 @@ var BoardCanvasDialogComponent = (function () {
         this.leftMouseDown = false;
     };
     BoardCanvasDialogComponent.prototype.onMousemove = function (event) {
+        if (!this.canvas.nativeElement.contains(event.target)) {
+            return;
+        }
         var mousePos = this.getMousePos(event);
         if (this.leftMouseDown) {
             if (!this.ctrlDown) {
-                this.currentPath.add(mousePos);
+                if (this.currentPath) {
+                    this.currentPath.add(mousePos);
+                }
             }
             else {
                 if (this.clipRectangleStart) {
@@ -131,6 +149,9 @@ var BoardCanvasDialogComponent = (function () {
         }
     };
     BoardCanvasDialogComponent.prototype.onMousedown = function (event) {
+        if (!this.canvas.nativeElement.contains(event.target)) {
+            return;
+        }
         this.leftMouseDown = true;
         var mousePos = this.getMousePos(event);
         if (this.ctrlDown) {
@@ -139,7 +160,7 @@ var BoardCanvasDialogComponent = (function () {
         else {
             this.currentPath = new this.scope.Path({
                 segments: [mousePos],
-                strokeColor: 'black',
+                strokeColor: this.color,
                 fullySelected: false
             });
         }
@@ -209,7 +230,8 @@ BoardCanvasDialogComponent = __decorate([
         templateUrl: './board-canvas-dialog.component.html'
     }),
     __metadata("design:paramtypes", [MdDialogRef,
-        BoardService])
+        BoardService,
+        ColorPickerService])
 ], BoardCanvasDialogComponent);
 export { BoardCanvasDialogComponent };
 //# sourceMappingURL=C:/Old/Hadron/HadronClient/src/app/board-zone/board-canvas-dialog/board-canvas-dialog.component.js.map

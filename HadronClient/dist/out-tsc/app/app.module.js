@@ -21,10 +21,13 @@ import { BoardNewDialogComponent } from './board-zone/board-new-dialog/board-new
 import { BoardCanvasDialogComponent } from './board-zone/board-canvas-dialog/board-canvas-dialog.component';
 import { BoardShareDialogComponent } from './board-zone/board-share-dialog/board-share-dialog.component';
 import { BoardListDialogComponent } from './board-zone/board-list-dialog/board-list-dialog.component';
+import { BoardFileGalleryComponent } from './board-zone/board-file-gallery/board-file-gallery.component';
 import { TextDocumentNewDialogComponent } from './board-zone/text-document-new-dialog/text-document-new-dialog.component';
 import { AuthenticationService } from './authentication-zone/app-authentication/authentication.service';
 import { MaterialModule } from '@angular/material';
 import { Uploader } from 'angular2-http-file-upload';
+import { ColorPickerModule } from 'angular2-color-picker';
+import { ColorPickerService } from 'angular2-color-picker';
 import { RoadMapDialogComponent } from './board-zone/road-map-dialog/road-map-dialog.component';
 import { TextDocumentListDialogComponent } from './board-zone/text-document-list-dialog/text-document-list-dialog.component';
 import { QuillModule } from 'ngx-quill';
@@ -59,6 +62,7 @@ AppModule = __decorate([
             RoadMapDialogComponent,
             BoardCanvasDialogComponent,
             BoardListDialogComponent,
+            BoardFileGalleryComponent,
             TextDocumentNewDialogComponent,
             TextDocumentListDialogComponent,
             AuthenticationZoneComponent,
@@ -72,6 +76,7 @@ AppModule = __decorate([
             HttpModule,
             VisModule,
             QuillModule,
+            ColorPickerModule,
             NgbModule.forRoot(),
             MaterialModule.forRoot(),
             RouterModule.forRoot(appRoutes)
@@ -82,6 +87,7 @@ AppModule = __decorate([
             BoardNewDialogComponent,
             RoadMapDialogComponent,
             BoardCanvasDialogComponent,
+            BoardFileGalleryComponent,
             BoardListDialogComponent,
             TextDocumentNewDialogComponent,
             TextDocumentListDialogComponent
@@ -93,6 +99,7 @@ AppModule = __decorate([
             },
             Uploader,
             BoardService,
+            ColorPickerService,
             AuthenticationService],
         bootstrap: [AppComponent]
     })

@@ -21,6 +21,7 @@ import { BoardConstants } from '../board-zone/board/board.constants';
 import { RoadMapDialogComponent } from './road-map-dialog/road-map-dialog.component';
 import { TextDocumentListDialogComponent } from './text-document-list-dialog/text-document-list-dialog.component';
 import { BoardShareDialogComponent } from './board-share-dialog/board-share-dialog.component';
+import { BoardFileGalleryComponent } from './board-file-gallery/board-file-gallery.component';
 import * as Quill from 'quill';
 var Parchment = Quill.import('parchment');
 var Block = Parchment.query('block');
@@ -75,6 +76,15 @@ var BoardZoneComponent = (function () {
         this.dialog.closeAll();
         this.dialog
             .open(BoardCanvasDialogComponent, { width: '100vw', height: '100vh', disableClose: true });
+    };
+    BoardZoneComponent.prototype.insertLastUploadedFile = function () {
+        this.boardService.insertLastUploadedFile();
+    };
+    BoardZoneComponent.prototype.openFileGallery = function () {
+        this.boardService.unfocusQuillEditor();
+        this.dialog.closeAll();
+        this.dialog
+            .open(BoardFileGalleryComponent, { width: '100vw', height: '100vh' });
     };
     BoardZoneComponent.prototype.setQuillEditor = function (event) {
         this.boardService.setQuillEditor(event);

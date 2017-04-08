@@ -17,6 +17,8 @@ BoardConstants.GET_TEXT_DOCUMENT_BY_NAME_URL = '/textDocument/name';
 BoardConstants.SAVE_TEXT_DOCUMENT_URL = '/textDocument/save';
 BoardConstants.LIST_TEXT_DOCUMENTS_URL = '/textDocument/list';
 BoardConstants.UPLOAD_URL = '/singleUpload';
+BoardConstants.GET_FILES_FOR_USER_URL = '/files/user';
+BoardConstants.GET_FILES_FOR_BOARD_URL = '/files/board';
 BoardConstants.QUILL_MODULES = {
     formula: true,
     toolbar: [

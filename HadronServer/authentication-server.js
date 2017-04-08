@@ -6,14 +6,12 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
   var fs = require('fs');
 
   var storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      console.log('in destination');
-      var data = req.body;
-      console.log('data', data, data.email);
-      fs.existsSync(genericConstants.UPLOAD_DIR_BASE + data.email) || fs.mkdirSync(genericConstants.UPLOAD_DIR_BASE + data.email);
-
-      fs.existsSync(genericConstants.UPLOAD_DIR_BASE + data.email + '/' + data.boardId) || fs.mkdirSync(genericConstants.UPLOAD_DIR_BASE + data.email + '/' + data.boardId);
-      cb(null, genericConstants.UPLOAD_DIR_BASE + data.email + '/' + data.boardId + '/');
+    destination: function (req, file, cb) {/*
+      fs.existsSync(genericConstants.UPLOAD_DIR_BASE + data.email) || 
+      fs.mkdirSync(genericConstants.UPLOAD_DIR_BASE + data.email);
+      fs.existsSync(genericConstants.UPLOAD_DIR_BASE + data.email + '/' + data.boardId) || 
+      fs.mkdirSync(genericConstants.UPLOAD_DIR_BASE + data.email + '/' + data.boardId);*/
+      cb(null, genericConstants.UPLOAD_DIR_BASE);
     },
     filename: function (req, file, cb) {
       console.log('in filename');
@@ -25,7 +23,7 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
         uploadedDate: now,
         size: file.size
       };
-      db.eval('function(email, fileDoc){ var document = db.hadronUsers.findOne({email:email}); if(document == null) return; document.files.push(fileDoc); db.hadronUsers.save(document);}', [data.email, fileDoc]);
+      db.eval('function(email, boardId, fileDoc){ var document = db.hadronUsers.findOne({email:email}); if(document == null) return; for(var i=0;i<document.boards.length;i++){if(document.boards[i].id === boardId){document.boards[i].files.push(fileDoc); db.hadronUsers.save(document);}}}', [data.email, data.boardId, fileDoc]);
       cb(null, fileName + '.png');
     }
   });
@@ -48,6 +46,33 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
     res.status(200).json({name: req.files[0].filename});
   });
 
+  application.post(genericConstants.GET_FILES_FOR_BOARD_URL, function(req, res) {
+    var data = req.body;
+    var ownerEmail = data.ownerEmail;
+    var boardName = data.boardName;
+
+    db.eval('function(ownerEmail, boardName){ var document = db.hadronUsers.findOne({email:ownerEmail}); for(var i=0;i<document.boards.length;i++) { if(document.boards[i].name === boardName) { return document.files; } } }', [ownerEmail, boardName])
+    .then(function(response) {
+      res.status(200).json(response);
+    })
+    .catch(function(error) {
+      res.status(500).json({message: error.message});
+    });
+
+  });
+
+  application.get(genericConstants.GET_FILES_FOR_USER_URL, function(req, res) {
+    var email = req.email;
+
+    db.eval('function(email){ var document = db.hadronUsers.findOne({email:email}); var files = []; for(var i=0;i<document.boards.length;i++) { files = files.concat(document.boards[i].files);} return files; }', [email])
+    .then(function(response) {
+      res.status(200).json(response);
+    })
+    .catch(function(error) {
+      res.status(500).json({message: error.message});
+    });
+  });
+
 	application.get(genericConstants.LOGIN_URL, function(req, res) {
 		var buffer = new Buffer(req.headers['authorization'], 'Base64');
 		var email = buffer
@@ -62,7 +87,6 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
 					settings: {
 						assignedUserColor: randomColor
 					},
-          files: [],
           roadMap: {
             clusters: [],
             nodes: [],
@@ -278,6 +302,7 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
 	  			textDocuments:[{
 	  				name: textDocumentName
 	  			}],
+          files: [],
 	  			lastVisited: {
 	  				name: textDocumentName,
 	  				email: email

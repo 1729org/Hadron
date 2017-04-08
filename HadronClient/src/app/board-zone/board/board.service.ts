@@ -43,6 +43,8 @@ export class BoardService {
 	private updateRoomUsers = new Subject<RoomUsers>();
 	updateRoomUsers$ = this.updateRoomUsers.asObservable();
 
+	private lastUploadedFileName :string;
+
 	constructor(private hadronHttp :HadronHttp,
 		private authenticationService: AuthenticationService,
 		private uploaderService: Uploader) {
@@ -337,10 +339,11 @@ export class BoardService {
 		this.paper = paper;
 	}
 
-	addPath(path :any) :void {
+	addPath(path :any, color: string) :void {
 		if(this.board && this.board.graphicDocument) {
 			let newPath = new Path();
 			newPath.path = path;
+			newPath.colorStroke = color;
 			this.board.graphicDocument.pushToContent(newPath);
 		}
 	}
@@ -351,17 +354,54 @@ export class BoardService {
 
 	uploadBlob(blob: any) {
 		let quillUpload = new QuillUpload(blob);
-    	quillUpload.formData = { email: this.authenticationService.getClaims().email, boardId: this.board.id };
+    	quillUpload.formData = { email: this.board.ownerEmail, boardId: this.board.id };
     	this.uploaderService.onSuccessUpload = (item, response, status, headers) => {
-         console.log(item);
+          	this.lastUploadedFileName = response.name;
         };
         this.uploaderService.onErrorUpload = (item, response, status, headers) => {
-            console.log(item);
+            console.log('error', item);
         };
         this.uploaderService.onCompleteUpload = (item, response, status, headers) => {
-            console.log(item);
+            this.lastUploadedFileName = response.name;
         };
     	this.uploaderService.upload(quillUpload);
+	}
+
+	insertLastUploadedFile() {
+		if(this.lastUploadedFileName) {
+			this.quillEditor.insertEmbed(this.quillEditor.getText().length, 'image', `${GenericConstants.BASE_FILE_URL}${this.lastUploadedFileName}`);
+		}
+	}
+
+	insertFromGallery(url) {
+		this.quillEditor.insertEmbed(this.quillEditor.getText().length, 'image', url);
+	}
+
+	getFilesForUser() {
+		if(this.isOwner()) {
+			return this.hadronHttp
+	        .get(`${GenericConstants.BASE_URL}${BoardConstants.GET_FILES_FOR_USER_URL}`)
+	        .map((response :Response) => {
+	        	console.log(response.json());
+	        	console.log(Tools.mapToFileArray(response.json()))
+				return Tools.mapToFileArray(response.json());
+	        })
+	        .catch((error :Response | any) => {
+				return Observable.throw(error);
+	        });
+		} else {
+			return this.hadronHttp
+	        .post(`${GenericConstants.BASE_URL}${BoardConstants.GET_FILES_FOR_BOARD_URL}`, {
+	        	ownerEmail: this.board.ownerEmail,
+	        	boardId: this.board.id
+	        })
+	        .map((response :Response) => {
+				return Tools.mapToFileArray(response.json());
+	        })
+	        .catch((error :Response | any) => {
+				return Observable.throw(error);
+	        });
+		}
 	}
 
 	clearCanvasPaths() {
