@@ -23,7 +23,7 @@ module.exports = function () {
 		CREATE_TEXT_DOCUMENT_URL: '/textDocument/create',
 
 		UPLOAD_URL: '/singleUpload',
-		UPLOAD_DIR_BASE: 'C://Uploads/',
+		UPLOAD_DIR_BASE: '/root/Uploads',
 		GET_FILES_FOR_USER_URL: '/files/user',
 		GET_FILES_FOR_BOARD_URL: '/files/board',
 
