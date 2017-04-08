@@ -1,4 +1,4 @@
-import { User } from './User';
+import { User } from './user';
 
 export class RoomUsers {
 	private _users: Array<User>;
