@@ -54,6 +54,7 @@ var BoardService = (function () {
             if (_this.socket && _this.socket.connected) {
                 _this.socket.disconnect();
             }
+            console.log('create board map');
             _this.board = Tools.mapToBoard(response.json());
             _this.board.graphicDocument = new GraphicDocument();
             return {};
@@ -94,12 +95,12 @@ var BoardService = (function () {
             if (_this.socket && _this.socket.connected) {
                 _this.socket.disconnect();
             }
-            if (!_this.isShared()) {
-                console.log('not shared');
-                _this.updateQuillFromTextDocument();
-            }
-            if (_this.isShared() && _this.hasTextDocument()) {
+            if (_this.isShared() && _this.hasTextDocument() && !_this.isConnected()) {
                 _this.connectToServer(_this.getTextDocumentRoomId());
+            }
+            if (!_this.isShared() || _this.isMaster()) {
+                _this.updateQuillFromTextDocument();
+                _this.quillEditor.enable();
             }
             return {};
         })
@@ -181,11 +182,12 @@ var BoardService = (function () {
             if (_this.socket && _this.socket.connected) {
                 _this.socket.disconnect();
             }
-            if (_this.isShared() && _this.hasTextDocument()) {
+            if (_this.isShared() && _this.hasTextDocument() && !_this.isConnected()) {
                 _this.connectToServer(_this.getTextDocumentRoomId());
             }
-            if (!_this.isShared()) {
+            if (!_this.isShared() || _this.isMaster()) {
                 _this.updateQuillFromTextDocument();
+                _this.quillEditor.enable();
             }
             return {};
         })
@@ -262,11 +264,12 @@ var BoardService = (function () {
             if (_this.socket && _this.socket.connected) {
                 _this.socket.disconnect();
             }
-            if (_this.isShared() && _this.hasTextDocument()) {
+            if (_this.isShared() && _this.hasTextDocument() && !_this.isConnected()) {
                 _this.connectToServer(_this.getTextDocumentRoomId());
             }
-            if (!_this.isShared()) {
+            if (!_this.isShared() || _this.isMaster()) {
                 _this.updateQuillFromTextDocument();
+                _this.quillEditor.enable();
             }
             return textDocument || {};
         })
@@ -282,11 +285,12 @@ var BoardService = (function () {
     BoardService.prototype.setBoard = function (board) {
         this.board = board;
         this.board.graphicDocument = new GraphicDocument();
-        if (!this.isShared()) {
-            console.log('not shared');
-            this.updateQuillFromTextDocument();
-        }
-        else {
+        if (this.quillEditor)
+            if (!this.isShared() || this.isMaster()) {
+                this.updateQuillFromTextDocument();
+                this.quillEditor.enable();
+            }
+        if (this.isShared() && !this.isConnected()) {
             this.connectToServer(this.board.textDocument.roomId);
         }
     };
@@ -378,20 +382,23 @@ var BoardService = (function () {
     };
     BoardService.prototype.setQuillEditor = function (quillEditor) {
         var _this = this;
-        console.log('setting quill editor');
         this.quillEditor = quillEditor;
-        console.log('quill editor set');
         this.quillEditor.disable();
-        console.log('quill editor disabled');
-        if ((this.board && !this.isShared()) || (this.board && this.isMaster())) {
-            console.log('trying to update');
-            this.updateQuillFromTextDocument();
-            console.log('should enable');
-            this.quillEditor.enable();
-        }
-        console.log('registered text change handler');
+        if (this.hasBoard())
+            if (!this.isShared() || this.isMaster()) {
+                this.updateQuillFromTextDocument();
+                this.quillEditor.enable();
+            }
+        this.quillEditor.on('editor-change', function (eventName) {
+            var args = [];
+            for (var _i = 1; _i < arguments.length; _i++) {
+                args[_i - 1] = arguments[_i];
+            }
+            if (eventName === 'selection-change' && args[2] !== 'self') {
+                _this.lastCursorIndexPosition = args[0].index;
+            }
+        });
         this.quillEditor.on('text-change', function (newDelta, oldDelta, source) {
-            console.log('text changed');
             if (_this.isShared()) {
                 if (source !== 'initial' && source !== 'remote') {
                     _this.socket.emit('deltaSyncEvent', {
@@ -441,6 +448,9 @@ var BoardService = (function () {
     };
     BoardService.prototype.isMaster = function () {
         return this.board.textDocument.master;
+    };
+    BoardService.prototype.isConnected = function () {
+        return this.socket && this.socket.connected;
     };
     BoardService.prototype.setMaster = function (value) {
         this.board.textDocument.master = value;
@@ -519,6 +529,9 @@ var BoardService = (function () {
                 _this.deltaQueue.push(new RemoteDelta(data.delta, data.timestamp));
             }
             else {
+                if (_this.lastCursorIndexPosition) {
+                    _this.quillEditor.setSelection(_this.lastCursorIndexPosition, 0, 'self');
+                }
                 _this.quillEditor.updateContents(data.delta, 'remote');
             }
         });

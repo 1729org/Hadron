@@ -21,6 +21,7 @@ BoardConstants.GET_FILES_FOR_USER_URL = '/files/user';
 BoardConstants.GET_FILES_FOR_BOARD_URL = '/files/board';
 BoardConstants.QUILL_MODULES = {
     formula: true,
+    syntax: true,
     toolbar: [
         ['bold', 'italic', 'underline', 'strike'],
         ['blockquote', 'code-block'],

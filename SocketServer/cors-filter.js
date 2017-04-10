@@ -1,6 +1,6 @@
 module.exports = function(application) {
 	application.use(function(req, res, next) {
-	  var allowedOrigins = ['http://localhost:4200'],
+	  var allowedOrigins = [genericConstants.ADD_LOCAL.FRONTEND_ROOT_URL],
 	  	  origin = req.headers.origin;
 	  if(allowedOrigins.indexOf(origin) > -1){
 	       res.setHeader('Access-Control-Allow-Origin', origin);

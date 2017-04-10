@@ -53,6 +53,7 @@ export class AuthenticationZoneComponent {
            this.router.navigateByUrl('/board');
          },
          error => {
+           console.log(error);
       });
    }
 

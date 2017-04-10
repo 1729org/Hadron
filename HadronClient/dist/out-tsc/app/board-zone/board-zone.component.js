@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Component, NgZone } from '@angular/core';
+import { Component, NgZone, ViewChild } from '@angular/core';
 import { RoomUsers } from '../models/room-users';
 import { BoardService } from '../board-zone/board/board.service';
 import { Router } from '@angular/router';
@@ -36,29 +36,26 @@ var BoardZoneComponent = (function () {
         this.dialog = dialog;
         this.router = router;
         this.quillModules = BoardConstants.QUILL_MODULES;
+        hljs.configure({
+            languages: ['javascript', 'ruby', 'python', 'java']
+        });
         boardService.logout$.subscribe(function (logout) {
             if (logout) {
                 _this.clearAndLogout();
             }
         });
         boardService.updateRoomUsers$.subscribe(function (roomUsers) {
-            console.log('room users triggered');
             _this.zone.run(function () {
                 _this.roomUsers = roomUsers;
             });
         });
         if (!authenticationService.isAuthenticated()) {
-            console.log('navigating to login');
             this.router.navigateByUrl('/login');
         }
-        console.log('bp0');
         if (!boardService.hasBoard()) {
-            console.log('does not have board');
             boardService.getLastModifiedBoard().subscribe(function (data) {
-                console.log('bp1', data);
                 _this.zone.run(function () {
                     _this.boardName = boardService.getCurrentBoardName();
-                    console.log('here');
                     _this.textDocumentName = boardService.getCurrentTextDocumentName();
                 });
             }, function (error) { });
@@ -71,6 +68,54 @@ var BoardZoneComponent = (function () {
         this.showChangeBoardNameInput = false;
         this.showChangeTextDocumentNameInput = false;
     }
+    BoardZoneComponent.prototype.adaptElement = function (element) {
+        var pdf = new jsPDF('p', 'pt', 'a4');
+        var canvas = document.createElement("canvas");
+        var images = element.getElementsByTagName("IMG");
+        var count = images.length;
+        var _loop_1 = function (image) {
+            var newImage = new Image();
+            canvas.width = image.width;
+            canvas.height = image.height;
+            console.log(image.src);
+            var ctx = canvas.getContext("2d");
+            console.log('setting origin');
+            newImage.setAttribute('crossOrigin', 'Anonymous');
+            newImage.setAttribute('src', image.src);
+            newImage.onload = function () {
+                console.log('loaded');
+                ctx.drawImage(newImage, 0, 0);
+                var dataURL = canvas.toDataURL("image/png");
+                console.log(dataURL);
+                image.setAttribute('src', dataURL);
+                console.log(count);
+                image.onload = function () {
+                    --count;
+                    if (count === 0) {
+                        html2canvas(element, {
+                            onrendered: function (canvas) {
+                                pdf.addImage(canvas.toDataURL("image/png"), "png", 0, 0);
+                                pdf.output('save', 'test.pdf');
+                            },
+                            allowTaint: true,
+                            logging: true
+                        });
+                    }
+                };
+            };
+            newImage.onerror = function (error) {
+                console.log(error);
+            };
+        };
+        for (var _i = 0, images_1 = images; _i < images_1.length; _i++) {
+            var image = images_1[_i];
+            _loop_1(image);
+        }
+    };
+    BoardZoneComponent.prototype.htmlToCanvas = function () {
+        var clone = document.querySelector('.ql-editor').cloneNode(true);
+        this.adaptElement(clone);
+    };
     BoardZoneComponent.prototype.whiteBoardOpen = function () {
         this.boardService.unfocusQuillEditor();
         this.dialog.closeAll();
@@ -264,6 +309,10 @@ var BoardZoneComponent = (function () {
     };
     return BoardZoneComponent;
 }());
+__decorate([
+    ViewChild("quillElement"),
+    __metadata("design:type", Object)
+], BoardZoneComponent.prototype, "quillElement", void 0);
 BoardZoneComponent = __decorate([
     Component({
         selector: 'board-zone',

@@ -23,6 +23,10 @@ let Block = Parchment.query('block');
 Block.tagName = 'DIV';
 Quill.register(Block, true);
 
+declare var hljs :any;
+declare var jsPDF :any;
+declare var html2canvas :any;
+
 @Component({
   selector: 'board-zone',
   templateUrl: './board-zone.component.html',
@@ -41,35 +45,37 @@ export class BoardZoneComponent {
    private quillEditor :any;
    private quillModules :any = BoardConstants.QUILL_MODULES;
 
+   @ViewChild("quillElement")
+   private quillElement :any;
+
    constructor(private boardService :BoardService, 
      private authenticationService :AuthenticationService,
      private zone: NgZone,
      private dialog: MdDialog,
      private router: Router,) {
+
+     hljs.configure({
+      languages: ['javascript', 'ruby', 'python', 'java']
+     });
+
      boardService.logout$.subscribe(logout => {
        if(logout) {
          this.clearAndLogout();
        }
      });
      boardService.updateRoomUsers$.subscribe(roomUsers => {
-       console.log('room users triggered');
        this.zone.run(() => {
          this.roomUsers = roomUsers
        });
      });
      if(!authenticationService.isAuthenticated()) {
-       console.log('navigating to login');
        this.router.navigateByUrl('/login');
      }
 
-         console.log('bp0');
      if(!boardService.hasBoard()) {
-       console.log('does not have board');
        boardService.getLastModifiedBoard().subscribe(data => {
-         console.log('bp1', data);
          this.zone.run(() => {
            this.boardName = boardService.getCurrentBoardName();
-            console.log('here');
            this.textDocumentName = boardService.getCurrentTextDocumentName();
          });
        }, error => {});
@@ -81,6 +87,53 @@ export class BoardZoneComponent {
      this.showChangeBoardNameInput = false;
      this.showChangeTextDocumentNameInput = false;
    }
+
+   adaptElement(element :any) {
+     var pdf = new jsPDF('p','pt','a4');
+     let canvas = document.createElement("canvas");
+     let images = element.getElementsByTagName("IMG");
+     let count = images.length;
+     for(let image of images) {
+      let newImage = new Image();
+      canvas.width = image.width;
+      canvas.height = image.height;
+      console.log(image.src);
+      let ctx = canvas.getContext("2d");
+      console.log('setting origin');
+      newImage.setAttribute('crossOrigin', 'Anonymous');
+      newImage.setAttribute('src', image.src);
+      newImage.onload = () => {
+        console.log('loaded');
+        ctx.drawImage(newImage, 0, 0);
+        let dataURL = canvas.toDataURL("image/png");
+        console.log(dataURL);
+        image.setAttribute('src', dataURL);
+        console.log(count);
+        image.onload = () => {
+          --count;
+          if(count === 0) {
+            html2canvas(element, {
+              onrendered: function(canvas) {
+                pdf.addImage(canvas.toDataURL("image/png"),"png",0,0);
+                pdf.output('save', 'test.pdf');
+              },
+              allowTaint: true,
+              logging: true
+            });
+          }
+        }
+      };
+
+      newImage.onerror = (error) => {
+        console.log(error);
+      };
+     }
+   }
+
+  htmlToCanvas() {
+    let clone = document.querySelector('.ql-editor').cloneNode(true);
+    this.adaptElement(clone);
+  }
    
   whiteBoardOpen() {
     this.boardService.unfocusQuillEditor();

@@ -23,13 +23,21 @@ module.exports = function () {
 		CREATE_TEXT_DOCUMENT_URL: '/textDocument/create',
 
 		UPLOAD_URL: '/singleUpload',
-		UPLOAD_DIR_BASE: '/root/Uploads',
 		GET_FILES_FOR_USER_URL: '/files/user',
 		GET_FILES_FOR_BOARD_URL: '/files/board',
 
 		INVALID_TOKEN: new Error('INVALID_TOKEN'),
 		UNKNOWN_USER: new Error('UNKNOWN_USER'),
 		INCOMPLETE_DATA: new Error('INCOMPLETE_DATA'),
-		BAD_DATA: new Error('BAD_DATA')
+		BAD_DATA: new Error('BAD_DATA'),
+
+		LOCAL: {
+			FRONTEND_ROOT_URL: 'http://localhost:4200',
+			UPLOAD_DIR_BASE: 'C:/Uploads/'
+		},
+		PROD: {
+			FRONTEND_ROOT_URL: 'http://178.62.127.9:4200',
+			UPLOAD_DIR_BASE: '/root/Uploads/'
+		}
 	}
 };

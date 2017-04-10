@@ -21,6 +21,7 @@ export class BoardConstants {
 	
 	public static QUILL_MODULES :any = {
 	  formula: true,
+	  syntax: true,
 	  toolbar: [
 	    ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
 	    ['blockquote', 'code-block'],

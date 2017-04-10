@@ -1,6 +1,7 @@
 var express     =  require('express'),
         bodyParser  =  require('body-parser'),
         app         =  express(),
+        genericConstants    =  require('./generic-constants')(),
         uuid = require('node-uuid');
 
         
@@ -9,7 +10,7 @@ var express     =  require('express'),
         extended : true
     }));
 
-    require('./cors-filter')(app);
+    require('./cors-filter')(app, genericConstants);
 
 
     var http = require('http').createServer(app).listen(8081, function(){

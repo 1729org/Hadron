@@ -54,6 +54,7 @@ var AuthenticationZoneComponent = (function () {
             console.log(_this.boardService.hasBoard());
             _this.router.navigateByUrl('/board');
         }, function (error) {
+            console.log(error);
         });
     };
     AuthenticationZoneComponent.prototype.getBoard = function () {

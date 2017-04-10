@@ -11,7 +11,7 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
       fs.mkdirSync(genericConstants.UPLOAD_DIR_BASE + data.email);
       fs.existsSync(genericConstants.UPLOAD_DIR_BASE + data.email + '/' + data.boardId) || 
       fs.mkdirSync(genericConstants.UPLOAD_DIR_BASE + data.email + '/' + data.boardId);*/
-      cb(null, genericConstants.UPLOAD_DIR_BASE);
+      cb(null, genericConstants.LOCAL.UPLOAD_DIR_BASE);
     },
     filename: function (req, file, cb) {
       console.log('in filename');
@@ -328,7 +328,6 @@ module.exports = function(db, application, genericConstants, tokenHandler) {
 	  			board.textDocument = board.textDocuments[0];
 	  			board.ownerEmail = email;
 	  			delete board.textDocuments;
-	  			delete board.shared;
 	  			delete board.lastVisited;
 				return res.status(200).json(board);
 	  		})

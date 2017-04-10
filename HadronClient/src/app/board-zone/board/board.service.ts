@@ -36,6 +36,7 @@ export class BoardService {
 	private lastModifiedTime :number; 
 	private socket :any;
 	private deltaQueue :PriorityQueue<RemoteDelta>;
+	private lastCursorIndexPosition :number;
 
 	private logout = new Subject<boolean>();
 	logout$ = this.logout.asObservable();
@@ -66,6 +67,7 @@ export class BoardService {
         	if(this.socket && this.socket.connected) {
         		this.socket.disconnect();
         	}
+        	console.log('create board map');
         	this.board = Tools.mapToBoard(response.json());
         	this.board.graphicDocument = new GraphicDocument();
 			return {};
@@ -106,12 +108,12 @@ export class BoardService {
         	if(this.socket && this.socket.connected) {
         		this.socket.disconnect();
         	}
-        	if(!this.isShared()) {
-        		console.log('not shared');
-        		this.updateQuillFromTextDocument();
-        	}
-        	if(this.isShared() && this.hasTextDocument()) {
+        	if(this.isShared() && this.hasTextDocument() && !this.isConnected()) {
         		this.connectToServer(this.getTextDocumentRoomId());
+        	}
+        	if(!this.isShared() || this.isMaster()) {
+        		this.updateQuillFromTextDocument();
+				this.quillEditor.enable();
         	}
 			return {};
         })
@@ -197,11 +199,12 @@ export class BoardService {
         	if(this.socket && this.socket.connected) {
         		this.socket.disconnect();
         	}
-        	if(this.isShared() && this.hasTextDocument()) {
+        	if(this.isShared() && this.hasTextDocument() && !this.isConnected()) {
         		this.connectToServer(this.getTextDocumentRoomId());
         	}
-        	if(!this.isShared()) {
+        	if(!this.isShared() || this.isMaster()) {
         		this.updateQuillFromTextDocument();
+				this.quillEditor.enable();
         	}
 			return {};
         })
@@ -288,11 +291,12 @@ export class BoardService {
         	if(this.socket && this.socket.connected) {
         		this.socket.disconnect();
         	}
-        	if(this.isShared() && this.hasTextDocument()) {
+        	if(this.isShared() && this.hasTextDocument() && !this.isConnected()) {
         		this.connectToServer(this.getTextDocumentRoomId());
         	}
-        	if(!this.isShared()) {
+        	if(!this.isShared() || this.isMaster()) {
         		this.updateQuillFromTextDocument();
+				this.quillEditor.enable();
         	}
 			return textDocument || {};
         })
@@ -310,10 +314,12 @@ export class BoardService {
 	setBoard(board :Board) :void{
 		this.board = board;
         this.board.graphicDocument = new GraphicDocument();
-		if(!this.isShared()) {
-			console.log('not shared');
+        if(this.quillEditor)
+		if(!this.isShared() || this.isMaster()) {
 			this.updateQuillFromTextDocument();
-		} else {
+			this.quillEditor.enable();
+		}
+		if(this.isShared() && !this.isConnected()) {
 			this.connectToServer(this.board.textDocument.roomId);
 		}
 	}
@@ -414,20 +420,19 @@ export class BoardService {
 
 
 	setQuillEditor(quillEditor :any) :void {
-		console.log('setting quill editor');
 		this.quillEditor = quillEditor;
-		console.log('quill editor set');
 		this.quillEditor.disable();
-		console.log('quill editor disabled');
-		if((this.board && !this.isShared()) || ( this.board && this.isMaster())) {
-			console.log('trying to update');
+		if(this.hasBoard())
+		if(!this.isShared() || this.isMaster()) {
 			this.updateQuillFromTextDocument();
-			console.log('should enable');
 			this.quillEditor.enable();
 		}
-		console.log('registered text change handler');
+		this.quillEditor.on('editor-change', (eventName, ...args) => {
+			if(eventName === 'selection-change' && args[2] !== 'self') {
+				this.lastCursorIndexPosition = args[0].index;
+			}
+		});
 		this.quillEditor.on('text-change', (newDelta, oldDelta, source) => {
-				console.log('text changed');
 				if(this.isShared()) {
 					if(source !== 'initial' && source !== 'remote') {
 						this.socket.emit('deltaSyncEvent', {
@@ -478,6 +483,10 @@ export class BoardService {
 
 	public isMaster() :boolean {
 		return this.board.textDocument.master;
+	}
+
+	public isConnected() {
+		return this.socket && this.socket.connected;
 	}
 
 	public setMaster(value :boolean) {
@@ -564,6 +573,9 @@ export class BoardService {
 			if(this.deltaQueue) {
 				this.deltaQueue.push(new RemoteDelta(data.delta, data.timestamp));
 			} else {
+				if(this.lastCursorIndexPosition) {
+					this.quillEditor.setSelection(this.lastCursorIndexPosition, 0, 'self');
+				}
 				this.quillEditor.updateContents(data.delta, 'remote');
 			}
 		});
